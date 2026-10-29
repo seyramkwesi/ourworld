@@ -60,9 +60,28 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 /* Hero device */
 .hero{display:flex;flex-direction:column;align-items:center;padding-top:14px;overflow-x:clip;overflow-y:visible;margin-inline:-16px;padding-inline:16px}
-.deck{position:relative;width:min(100%,380px);cursor:pointer;-webkit-tap-highlight-color:transparent;border:0;background:none;padding:18px 0 6px;transition:transform 160ms var(--ease-out)}
-.deck:active{transform:scale(.985)}
-.deck svg{width:100%;height:auto;display:block;overflow:visible;filter:drop-shadow(0 22px 26px rgba(0,0,0,.28)) drop-shadow(0 4px 6px rgba(0,0,0,.18))}
+/* Recorder deck: back (bay) → cassette → front frame with a glass window. Cassette sits half out of the top slot
+   until you tap record; it slides in, the door closes, then recording starts. Stop ejects it. */
+.player{position:relative;width:min(100%,400px);aspect-ratio:400/392;margin-top:34px;isolation:isolate}
+.player>svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.deckback{z-index:0}
+.deckfront{z-index:2;filter:drop-shadow(0 24px 28px rgba(0,0,0,.18)) drop-shadow(0 3px 5px rgba(0,0,0,.12))}
+.deck{position:absolute;z-index:1;left:10%;width:80%;top:23.47%;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transform:translateY(-46%);transition:transform 560ms var(--ease-in-out)}
+.deck svg{width:100%;height:auto;display:block;overflow:visible;filter:drop-shadow(0 10px 14px rgba(0,0,0,.3))}
+.loaded .deck{transform:translateY(0)}
+.ejecting .deck{animation:eject 520ms var(--ease-out)}
+@keyframes eject{0%{transform:translateY(0)}62%{transform:translateY(-52%)}100%{transform:translateY(-46%)}}
+@media (hover:hover) and (pointer:fine){.hero:not(.loaded) .deck:hover{transform:translateY(-43%)}}
+.door{transform-box:fill-box;transform-origin:50% 0;transform:scaleY(0);opacity:0;transition:transform 200ms var(--ease-out),opacity 200ms ease}
+.closed .door{transform:scaleY(1);opacity:1}
+.closed .player{animation:clunk 180ms var(--ease-out)}
+@keyframes clunk{40%{transform:translateY(2px)}}
+.key{transition:transform 120ms var(--ease-out)}
+.key.down{transform:translateY(3px)}
+.key.down .kface{fill:#bdbdc2}
+.deckled{transition:fill 200ms ease}
+.recording .deckled{fill:#ff3b30;animation:glow 1.2s ease-in-out infinite}
 .hub{transform-box:fill-box;transform-origin:center;animation:spin 2.2s linear infinite;animation-play-state:paused}
 .recording .hub{animation-play-state:running}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -91,18 +110,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .recording .recbtn i{width:28px;height:28px;border-radius:7px}
 /* Cassette alive while recording: gentle bob, ripples scaled by loudness, running tape, REC lamp */
 .deck{isolation:isolate}
-.ripples{position:absolute;inset:18px 0 6px;z-index:-1;pointer-events:none}
+.ripples{position:absolute;left:0;right:0;top:17.9%;bottom:0;z-index:-1;pointer-events:none}
 .ripples i{position:absolute;inset:0;border-radius:28px;border:2px solid var(--rc,#ff3b30);opacity:0;transform:scale(.9)}
 .recording .ripples i{animation:ripple 1.8s var(--ease-out) infinite}
 .recording .ripples i:nth-child(2){animation-delay:.6s}.recording .ripples i:nth-child(3){animation-delay:1.2s}
 @keyframes ripple{0%{opacity:var(--ro,.4);transform:scale(.94)}100%{opacity:0;transform:scale(1.12)}}
-.recording .deck svg{animation:bob 2.6s ease-in-out infinite}
-@keyframes bob{50%{transform:translateY(-4px) rotate(-.6deg)}}
 .tape{stroke-dasharray:3 4;animation:run .5s linear infinite;animation-play-state:paused}
 .recording .tape{animation-play-state:running}
 @keyframes run{to{stroke-dashoffset:-14}}
-.led{transition:fill 200ms ease}
-.recording .led{fill:#ff3b30;animation:glow 1.2s ease-in-out infinite}
+
 @keyframes glow{50%{opacity:.45}}
 
 /* Highlights tiles */
@@ -248,7 +264,8 @@ footer p+p{margin-top:6px}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   .hub{animation:none}
-  .recording .deck svg,.recording .ripples i,.tape,.recording .led,.tile{animation:none}
+  .recording .ripples i,.tape,.recording .deckled,.tile,.ejecting .deck,.closed .player{animation:none}
+  .deck,.door,.key{transition:none}
   .status.rec .dot,.me::after{animation:none}
   .needle,.needle2,.pack,.recbtn i{transition:none}
 }
@@ -266,8 +283,14 @@ footer p+p{margin-top:6px}
     <div class="colA">
       <!-- Hero device -->
       <section class="hero" id="measure" aria-label="Sound meter">
+        <div class="player">
+        <span class="ripples" aria-hidden="true"><i></i><i></i><i></i></span>
+        <svg class="deckback" viewBox="0 0 400 392" aria-hidden="true">
+          <rect x="0" y="70" width="400" height="322" rx="30" fill="#bfbfc4"/>
+          <rect x="28" y="84" width="344" height="222" rx="16" fill="#0b0b0c"/>
+          <rect x="60" y="66" width="280" height="10" rx="4" fill="#1a1a1b"/>
+        </svg>
         <button class="deck" id="deck" type="button" aria-label="Tap to record">
-          <span class="ripples" aria-hidden="true"><i></i><i></i><i></i></span>
           <svg id="cassette" viewBox="0 0 320 206" aria-hidden="true">
             <defs>
               <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3a3c"/><stop offset=".08" stop-color="#232325"/><stop offset="1" stop-color="#121213"/></linearGradient>
@@ -306,13 +329,32 @@ footer p+p{margin-top:6px}
               <g class="hub"><circle cx="216" cy="153" r="9" fill="#e9e9ea"/><circle cx="216" cy="153" r="4.6" fill="#0a0a0a"/>
                 <g fill="#e9e9ea"><rect x="214.8" y="145.5" width="2.4" height="3.4" rx=".6"/><rect x="214.8" y="157.1" width="2.4" height="3.4" rx=".6"/><rect x="208.5" y="151.8" width="3.4" height="2.4" rx=".6"/><rect x="220.1" y="151.8" width="3.4" height="2.4" rx=".6"/></g></g>
             </g>
-            <circle class="led" cx="290" cy="153" r="3.4" fill="#3a1412"/>
-            <text x="290" y="166" fill="#5a5a5e" font-size="5.5" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">REC</text>
             <!-- Bottom guide -->
             <path d="M58 206 L72 186 H248 L262 206" fill="#0e0e0f" stroke="#3a3a3c"/>
             <g fill="#050505" stroke="#2c2c2e" stroke-width=".8"><circle cx="96" cy="196" r="3.4"/><circle cx="224" cy="196" r="3.4"/><rect x="138" y="191" width="8" height="9" rx="1.5"/><rect x="174" y="191" width="8" height="9" rx="1.5"/></g>
           </svg>
         </button>
+        <svg class="deckfront" viewBox="0 0 400 392" aria-hidden="true">
+          <defs>
+            <linearGradient id="alu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f4f6"/><stop offset=".5" stop-color="#e2e2e6"/><stop offset="1" stop-color="#cfcfd4"/></linearGradient>
+            <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".35" stop-color="#fff" stop-opacity=".06"/><stop offset=".36" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#9ab" stop-opacity=".08"/></linearGradient>
+            <linearGradient id="keyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fafafa"/><stop offset="1" stop-color="#dcdce0"/></linearGradient>
+          </defs>
+          <path fill="url(#alu)" fill-rule="evenodd" d="M30 70H370A30 30 0 0 1 400 100V362A30 30 0 0 1 370 392H30A30 30 0 0 1 0 362V100A30 30 0 0 1 30 70Z M44 84H356A16 16 0 0 1 372 100V290A16 16 0 0 1 356 306H44A16 16 0 0 1 28 290V100A16 16 0 0 1 44 84Z"/>
+          <path d="M30 70.5H370" stroke="#fff" stroke-width="1"/>
+          <path d="M44 84.5H356A15.5 15.5 0 0 1 371.5 100V290A15.5 15.5 0 0 1 356 305.5H44A15.5 15.5 0 0 1 28.5 290V100A15.5 15.5 0 0 1 44 84.5Z" fill="none" stroke="#a9a9ae"/>
+          <rect class="door" x="28" y="84" width="344" height="222" rx="16" fill="url(#glass)" stroke="#ffffff" stroke-opacity=".35"/>
+          <text x="34" y="80" fill="#8e8e93" font-size="7" font-family="ui-monospace,Menlo,monospace" letter-spacing="1">NOISE MAP · TC-1</text>
+          <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
+            <g class="key" id="kRec"><rect class="kface" x="44" y="320" width="62" height="34" rx="9" fill="url(#keyg)" stroke="#b5b5ba"/><circle cx="75" cy="337" r="5.5" fill="#ff3b30"/></g>
+            <g class="key" id="kPlay"><rect class="kface" x="114" y="320" width="62" height="34" rx="9" fill="url(#keyg)" stroke="#b5b5ba"/><path d="M140 331v12l10-6z" fill="#3a3a3c"/></g>
+            <g class="key" id="kStop"><rect class="kface" x="184" y="320" width="62" height="34" rx="9" fill="url(#keyg)" stroke="#b5b5ba"/><rect x="209" y="331" width="12" height="12" rx="1.5" fill="#3a3a3c"/></g>
+            <g class="key" id="kEject"><rect class="kface" x="254" y="320" width="62" height="34" rx="9" fill="url(#keyg)" stroke="#b5b5ba"/><path d="M285 330l-7 8h14zM278 341h14v2.6h-14z" fill="#3a3a3c"/></g>
+            <circle class="deckled" cx="344" cy="331" r="4" fill="#5a2a28"/>
+            <text x="344" y="349" fill="#8e8e93" font-size="7" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">REC</text>
+          </g>
+        </svg>
+        </div>
         <h2 class="devname" id="devname">Sound Meter</h2>
         <div class="status" id="status"><span class="dot"></span><span id="statusTxt">Ready</span><span class="bar"></span><span class="batt"><i><b id="battFill"></b></i><span id="pct">0%</span></span></div>
         <div class="recrow">
@@ -464,6 +506,7 @@ footer p+p{margin-top:6px}
 (function(){
 "use strict";
 const $ = id => document.getElementById(id);
+const hero=document.querySelector(".hero");
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const reduceMotion = matchMedia("(prefers-reduced-motion:reduce)").matches;
 const store = {
@@ -664,21 +707,36 @@ function setStatus(){
   const st=$("status"),d=samples.length*0.125;
   st.className="status"+(recording?" rec":ctx?" live":"");
   $("statusTxt").textContent=recording?"Recording":samples.length?`Paused · ${mmss(d)}`:"Ready";
-  document.querySelector(".hero").classList.toggle("recording",recording);
+  hero.classList.toggle("recording",recording);
   $("faceState").textContent=recording?"● REC":samples.length?"PAUSED":"READY";$("faceState").setAttribute("fill",recording?"#ff453a":"#6d6d72");
   $("btnRec").setAttribute("aria-label",recording?"Stop recording":"Start recording");
   $("deck").setAttribute("aria-label",recording?"Stop recording":"Tap to record");
 }
-// One control: tap to start the microphone and record, tap again to stop.
+// One control: tap to insert the cassette and record, tap again to stop and eject.
+const wait=ms=>new Promise(r=>setTimeout(r,reduceMotion?0:ms));
+let busy=false;
+function keys(down){["kRec","kPlay","kStop","kEject"].forEach(k=>$(k).classList.toggle("down",down.includes(k)))}
+async function eject(){
+  keys(["kStop"]);hero.classList.remove("closed");await wait(160);
+  keys(["kEject"]);hero.classList.add("ejecting");hero.classList.remove("loaded");
+  await wait(520);hero.classList.remove("ejecting");keys([]);
+}
 async function toggleRecord(){
+  if(busy) return;busy=true;
   if(recording){
     recording=false;stopMic();updateStats();setStatus();
     $("micMsg").className="hint";$("micMsg").textContent=samples.length*0.125>=5?"Stopped. Name the source below and save, or tap to keep recording.":"That was short. Tap to keep recording.";
-    return;
+    await eject();busy=false;return;
   }
-  if(!ctx){const ok=await startMic();if(!ok){setStatus();return}}
+  // Insert: slide in, close the door, press REC + PLAY. The mic starts in parallel so permission prompts don't wait.
+  $("statusTxt").textContent="Loading tape…";
+  hero.classList.add("loaded");
+  const [ok]=await Promise.all([ctx?Promise.resolve(true):startMic(),wait(560)]);
+  if(!ok){await eject();setStatus();busy=false;return}
+  hero.classList.add("closed");await wait(200);
+  keys(["kRec","kPlay"]);
   if(!samples.length) recStart=Date.now();
-  recording=true;setStatus();
+  recording=true;setStatus();busy=false;
   $("micMsg").className="hint";$("micMsg").textContent="Recording. Point the phone toward the source and hold still for 30–60 seconds.";
 }
 function resetSession(){samples=[];liveHist=[];drawSpark();updateStats();setStatus();$("micMsg").className="hint";$("micMsg").textContent="Cleared. Tap the button to record again."}
@@ -841,7 +899,7 @@ $("form").addEventListener("submit",e=>{
   if(!s||s.dur<5){m.textContent="Record at least a few seconds first: tap the red button.";return}
   if(!$("place").value.trim()){m.textContent="Name the source first.";$("place").focus();return}
   if(!pick){m.textContent=watchId!=null?"Still finding your location. Wait a moment, or tap the map.":"Set a location: tap Location, or tap the map.";return}
-  if(recording){recording=false;stopMic();setStatus()}
+  if(recording){recording=false;stopMic();setStatus();eject()}
   const r={id:uid(),place:$("place").value.trim(),category:$("category").value,lat:pick.lat,lng:pick.lng,acc:pick.acc,
     leq:+s.leq.toFixed(1),lmax:+s.lmax.toFixed(1),l90:+s.l90.toFixed(1),dur:Math.round(s.dur),weighting:settings.weighting,
     offset:settings.offset,distance:$("distance").value?+$("distance").value:null,notes:$("notes").value.trim(),ts:recStart||Date.now()};

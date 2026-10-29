@@ -6,7 +6,7 @@ It runs entirely in the browser. There is no server, no account and no build ste
 
 ## Features
 
-- **Cassette meter**: tap the record button (or the cassette) to start the microphone and record; tap again to stop. The cassette label is a watch-style dial: the long hand shows the level now, the short hand the recording's average (Leq), and ticks past the legal limit are red. While recording, the cassette bobs, sound ripples pulse out in the loudness colour, the tape runs, the REC lamp glows and the tape winds across as you approach 60 seconds.
+- **Cassette meter**: tap the record button (or the cassette) and the cassette slides into the TC-1 recorder, the glass door closes, REC and PLAY press down and recording starts; tap again to stop and the cassette ejects. The cassette label is a watch-style dial: the long hand shows the level now, the short hand the recording's average (Leq), and ticks past the legal limit are red. While recording, the cassette bobs, sound ripples pulse out in the loudness colour, the tape runs, the REC lamp glows and the tape winds across as you approach 60 seconds.
 - **Highlights**: live tiles for the level now (with a 15-second sound graph), average, time (progress ring to 60 s), peak (per-second bars), background, and a verdict tile that says how far over or under the legal limit the recording is.
 - **Survey readings**: Leq (energy average), Max and L90 (background) over each recording.
 - **Map**: full-colour OpenStreetMap streets or Esri satellite imagery, with colour-coded points, filters by source type, and popups showing whether each reading broke the day or night limit.

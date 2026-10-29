@@ -1,6 +1,6 @@
 // Community Noise Map service worker: makes the app open offline.
 // Bump VERSION whenever index.html or other app files change.
-const VERSION = "v9";
+const VERSION = "v10";
 const APP = "noisemap-app-" + VERSION;
 const CDN = "noisemap-cdn-v1";
 const TILES = "noisemap-tiles-v1";
