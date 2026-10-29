@@ -1,6 +1,6 @@
 // Community Noise Map service worker: makes the app open offline.
 // Bump VERSION whenever index.html or other app files change.
-const VERSION = "v5";
+const VERSION = "v6";
 const APP = "noisemap-app-" + VERSION;
 const CDN = "noisemap-cdn-v1";
 const TILES = "noisemap-tiles-v1";
@@ -63,7 +63,7 @@ self.addEventListener("fetch", (e) => {
   }
 
   // Map tiles: show cached tiles offline, refresh in the background.
-  if (url.hostname.endsWith("tile.openstreetmap.org")) {
+  if (url.hostname.endsWith("tile.openstreetmap.org") || (url.hostname === "server.arcgisonline.com" && url.pathname.includes("/tile/"))) {
     e.respondWith(
       caches.open(TILES).then(async (c) => {
         const hit = await c.match(req);

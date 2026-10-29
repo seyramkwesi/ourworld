@@ -185,7 +185,20 @@ textarea{resize:vertical;min-height:62px}
 .dark .deco line{stroke:var(--red);stroke-width:1;opacity:.8}
 .mapframe{position:relative;border-radius:22px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.12);background:var(--night-2)}
 #map{height:min(70vh,640px);min-height:440px;background:var(--night-2)}
-.leaflet-tile-pane{filter:invert(1) grayscale(1) brightness(.8) contrast(1.12)}
+#map{background:#e8e6e1}
+.maptools{position:absolute;z-index:500;top:12px;right:12px;display:flex;gap:6px;align-items:center}
+.maptools .seg{background:rgba(251,250,248,.92);box-shadow:0 2px 10px rgba(0,0,0,.18);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.maptools .seg button[aria-pressed="true"]{background:var(--ink);color:#fff;box-shadow:none}
+.locbtn{width:34px;height:34px;border-radius:50%;border:0;background:rgba(251,250,248,.92);color:var(--ink);display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.18);
+  transition:transform 140ms var(--ease-out),background-color 160ms ease,color 160ms ease}
+.locbtn:active{transform:scale(.94)}
+.locbtn.on{background:#2f7cf6;color:#fff}
+.locbtn svg{width:16px;height:16px}
+.me-wrap{background:none;border:0}
+.me{display:block;width:16px;height:16px;border-radius:50%;background:#2f7cf6;box-shadow:0 0 0 3px #fff,0 1px 6px rgba(0,0,0,.35);position:relative}
+.me::after{content:"";position:absolute;inset:-3px;border-radius:50%;box-shadow:0 0 0 0 rgba(47,124,246,.55);animation:mepulse 2s ease-out infinite}
+@keyframes mepulse{to{box-shadow:0 0 0 16px rgba(47,124,246,0)}}
+@media (prefers-reduced-motion:reduce){.me::after{animation:none}}
 .leaflet-container{font-family:var(--grotesk)}
 .leaflet-control-zoom{border:0!important}
 .leaflet-control-zoom a{background:rgba(23,23,22,.85)!important;color:#fff!important;border:0!important;border-radius:8px!important;margin-top:4px;font-family:var(--mono)!important}
@@ -197,7 +210,7 @@ textarea{resize:vertical;min-height:62px}
 .leaflet-popup-content .mono{font-size:.76rem}
 .over{color:var(--red);font-weight:500}
 .ok{color:#2d7a4b;font-weight:500}
-.mapann{position:absolute;z-index:500;left:12px;top:12px;max-width:min(270px,70%);background:rgba(12,12,12,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+.mapann{position:absolute;z-index:500;left:12px;bottom:12px;max-width:min(270px,62%);background:rgba(12,12,12,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px 14px;color:#eceae6}
 .mapann .ann{color:#bdbab3;max-width:none;margin-top:6px}
 .filters{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
@@ -367,7 +380,7 @@ footer .ann{max-width:40ch}
                 <span class="lbl">Location</span>
                 <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
                   <button type="button" id="btnGps" class="btn sm line">Use GPS</button>
-                  <span class="loc" id="locText">Not set. Use GPS or tap the map.</span>
+                  <span class="loc" id="locText">Found automatically when the microphone is on. You can also tap the map.</span>
                 </div>
               </div>
               <div class="field">
@@ -383,7 +396,7 @@ footer .ann{max-width:40ch}
 
           <div class="app">
             <div class="ahead"><div><span class="lbl">Activity</span><h3 style="margin-top:4px">Readings over time</h3></div>
-              <div class="seg" role="group" aria-label="Chart value"><button type="button" data-k="leq" aria-pressed="true">Leq</button><button type="button" data-k="lmax" aria-pressed="false">Max</button></div></div>
+              <div class="seg" role="group" aria-label="Chart value" id="chartSeg"><button type="button" data-k="leq" aria-pressed="true">Leq</button><button type="button" data-k="lmax" aria-pressed="false">Max</button></div></div>
             <svg id="chart" viewBox="0 0 400 210" aria-label="Readings over time"></svg>
             <p class="note" style="margin-top:8px">Dashed red line: day limit for the chosen zone. Hover or tap a point to inspect.</p>
           </div>
@@ -404,6 +417,10 @@ footer .ann{max-width:40ch}
       <div class="mapframe">
         <div id="map" aria-label="Noise map"></div>
         <div class="mapann"><span class="lbl">Live index</span><div class="ann" id="mapAnn">—</div></div>
+        <div class="maptools">
+          <div class="seg" role="group" aria-label="Map style" id="baseSeg"><button type="button" data-l="map" aria-pressed="true">Map</button><button type="button" data-l="sat" aria-pressed="false">Satellite</button></div>
+          <button class="locbtn" id="btnLocate" type="button" aria-label="Show my location"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="3"/><path d="M8 1v2.5M8 12.5V15M1 8h2.5M12.5 8H15"/></svg></button>
+        </div>
       </div>
       <div class="filters" id="filters" role="group" aria-label="Show on map"></div>
       <div class="legend" aria-label="Legend">
@@ -599,6 +616,7 @@ async function startMic(){
   const half=N_SPOKES/2;binEdges=[];
   for(let k=0;k<=half;k++){binEdges.push(Math.max(1,Math.round(60*Math.pow(12000/60,k/half)/binHz)))}
   timer=setInterval(tick,125);
+  startWatch(!readings.length);
   try{if("wakeLock" in navigator) wakeLock=await navigator.wakeLock.request("screen")}catch(e){}
   msg.textContent="Microphone on. Point it toward the source and keep your hand off the mic hole.";
   $("btnMic").textContent="Stop microphone";$("btnMic").classList.add("line");
@@ -610,6 +628,7 @@ function stopMic(){
   if(stream) stream.getTracks().forEach(t=>t.stop());
   if(ctx) ctx.close();ctx=null;stream=null;
   try{wakeLock&&wakeLock.release()}catch(e){} wakeLock=null;
+  stopWatch();
   $("btnMic").textContent="Start microphone";$("btnMic").classList.remove("line");
   $("btnRec").disabled=true;$("btnRec").classList.add("line");$("btnRec").classList.remove("red");
   $("live").textContent="—";setBand(null);idleSpokes();$("micMsg").textContent="Microphone off.";
@@ -668,24 +687,65 @@ $("btnReset").addEventListener("click",resetSession);
 /* ---------- Map ---------- */
 const map=L.map("map",{zoomControl:false,scrollWheelZoom:false}).setView([5.6037,-0.1870],14);
 L.control.zoom({position:"bottomright"}).addTo(map);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+// Real basemaps: OpenStreetMap streets, or Esri satellite imagery with place labels on top.
+const BASES={
+  map:L.layerGroup([L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'})]),
+  sat:L.layerGroup([
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:'Imagery &copy; Esri, Maxar, Earthstar Geographics'}),
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",{maxZoom:19})
+  ])
+};
+let baseKey=BASES[settings.base]?settings.base:"map";
+BASES[baseKey].addTo(map);
+function setBase(k){
+  if(k===baseKey)return;map.removeLayer(BASES[baseKey]);baseKey=k;BASES[k].addTo(map);settings.base=k;saveSettings();
+  document.querySelectorAll("#baseSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.l===k));
+}
+document.querySelectorAll("#baseSeg button").forEach(b=>{b.setAttribute("aria-pressed",b.dataset.l===baseKey);b.addEventListener("click",()=>setBase(b.dataset.l))});
 map.on("focus",()=>map.scrollWheelZoom.enable());map.on("blur",()=>map.scrollWheelZoom.disable());
 const layer=L.layerGroup().addTo(map);
-let pick=null,pickMarker=null,activeCats=new Set(CATS);
+let pick=null,pickMarker=null,manualPick=false,activeCats=new Set(CATS);
 const markers={};
 function setPick(lat,lng,acc,src){
   pick={lat,lng,acc};
-  if(!pickMarker){pickMarker=L.circleMarker([lat,lng],{radius:8,color:"#fff",weight:2,fillColor:css("--red"),fillOpacity:1,dashArray:"3 3"}).addTo(map)}
-  else pickMarker.setLatLng([lat,lng]);
-  $("locText").textContent=lat.toFixed(5)+", "+lng.toFixed(5)+(acc?" ± "+Math.round(acc)+" m":"")+" ("+src+")";
+  if(src==="map"){
+    if(!pickMarker){pickMarker=L.circleMarker([lat,lng],{radius:8,color:"#fff",weight:2,fillColor:css("--red"),fillOpacity:1,dashArray:"3 3"}).addTo(map)}
+    else pickMarker.setLatLng([lat,lng]);
+  }else if(pickMarker){map.removeLayer(pickMarker);pickMarker=null}
+  $("locText").textContent=lat.toFixed(5)+", "+lng.toFixed(5)+(acc?" ± "+Math.round(acc)+" m":"")+" · "+(src==="map"?"placed on map":"from GPS");
 }
-map.on("click",e=>setPick(e.latlng.lat,e.latlng.lng,null,"map"));
-$("btnGps").addEventListener("click",()=>{
-  if(!navigator.geolocation){$("locText").textContent="GPS isn't available here. Tap the map instead.";return}
-  $("locText").textContent="Finding you…";
-  navigator.geolocation.getCurrentPosition(p=>{setPick(p.coords.latitude,p.coords.longitude,p.coords.accuracy,"GPS");map.setView([p.coords.latitude,p.coords.longitude],17)},
-    ()=>{$("locText").textContent="Location was blocked or timed out. Allow location, or tap the map."},{enableHighAccuracy:true,timeout:15000,maximumAge:0});
-});
+map.on("click",e=>{manualPick=true;setPick(e.latlng.lat,e.latlng.lng,null,"map")});
+
+/* Live GPS: a blue "you are here" dot. While it runs, each reading is pinned where it was recorded. */
+let me=null,meAcc=null,meLast=null,watchId=null,centerOnFix=false;
+function showMe(lat,lng,acc){
+  meLast=[lat,lng];
+  if(!me){
+    meAcc=L.circle([lat,lng],{radius:acc,color:"#2f7cf6",weight:1,fillColor:"#2f7cf6",fillOpacity:.12,interactive:false}).addTo(map);
+    me=L.marker([lat,lng],{icon:L.divIcon({className:"me-wrap",html:'<span class="me"></span>',iconSize:[16,16],iconAnchor:[8,8]}),keyboard:false,zIndexOffset:1000}).addTo(map);
+  }else{me.setLatLng([lat,lng]);meAcc.setLatLng([lat,lng]).setRadius(acc)}
+}
+function startWatch(center){
+  if(center)centerOnFix=true;
+  if(!navigator.geolocation){$("locText").textContent="GPS isn't available on this device. Tap the map to place the pin.";return}
+  if(watchId!=null){if(center&&meLast)map.setView(meLast,Math.max(map.getZoom(),17));return}
+  $("locText").textContent="Finding your location…";$("btnLocate").classList.add("on");
+  watchId=navigator.geolocation.watchPosition(p=>{
+    const {latitude:la,longitude:lo,accuracy:ac}=p.coords;
+    showMe(la,lo,ac);
+    if(!manualPick)setPick(la,lo,ac,"gps");
+    if(centerOnFix){centerOnFix=false;map.setView([la,lo],Math.max(map.getZoom(),17))}
+  },err=>{
+    $("locText").textContent=err.code===1?"Location is blocked. Allow it in your browser's site settings, or tap the map.":"Couldn't get a GPS fix yet. Move outside, or tap the map.";
+    if(err.code===1)stopWatch();
+  },{enableHighAccuracy:true,maximumAge:5000,timeout:30000});
+}
+function stopWatch(){
+  if(watchId!=null){navigator.geolocation.clearWatch(watchId);watchId=null}
+  $("btnLocate").classList.remove("on");
+}
+$("btnGps").addEventListener("click",()=>{manualPick=false;startWatch(true)});
+$("btnLocate").addEventListener("click",()=>{manualPick=false;startWatch(true)});
 function buildFilters(){
   const f=$("filters");f.innerHTML="";
   CATS.forEach(c=>{const b=document.createElement("button");b.type="button";b.className="fchip";b.textContent=c;b.setAttribute("aria-pressed",activeCats.has(c));
@@ -737,7 +797,7 @@ function drawChart(){
   showTip(pts.length-1);
   svg.querySelectorAll(".pt").forEach(c=>{const i=+c.dataset.i;c.style.cursor="pointer";c.addEventListener("pointerenter",()=>showTip(i));c.addEventListener("click",()=>showTip(i))});
 }
-document.querySelectorAll(".seg button").forEach(b=>b.addEventListener("click",()=>{chartKey=b.dataset.k;document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));drawChart()}));
+document.querySelectorAll("#chartSeg button").forEach(b=>b.addEventListener("click",()=>{chartKey=b.dataset.k;document.querySelectorAll("#chartSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));drawChart()}));
 
 /* ---------- Sources + table ---------- */
 function texture(cnv,hex,seed){
@@ -802,14 +862,17 @@ $("form").addEventListener("submit",e=>{
   const m=$("saveMsg");m.className="msg err";
   const s=sessionStats();
   if(!s||s.dur<5){m.textContent="Record at least a few seconds first.";return}
-  if(!pick){m.textContent="Set a location: use GPS or tap the map.";return}
+  if(!pick){m.textContent=watchId!=null?"Still finding your location. Wait a moment, or tap the map.":"Set a location: press Use GPS or tap the map.";return}
   const r={id:uid(),place:$("place").value.trim(),category:$("category").value,lat:pick.lat,lng:pick.lng,acc:pick.acc,
     leq:+s.leq.toFixed(1),lmax:+s.lmax.toFixed(1),l90:+s.l90.toFixed(1),dur:Math.round(s.dur),weighting:settings.weighting,
     offset:settings.offset,distance:$("distance").value?+$("distance").value:null,notes:$("notes").value.trim(),ts:recStart||Date.now()};
   readings.push(r);store.set(KEY,readings);
   resetSession();$("notes").value="";
-  m.className="msg good";m.textContent=`Saved · ${r.leq} dB(${r.weighting}). Thank you for contributing.`;
-  renderAll(readings.length===1);
+  m.className="msg good";m.textContent=`Saved · ${r.leq} dB(${r.weighting}). It's on the map. Thank you for contributing.`;
+  renderAll(false);
+  map.setView([r.lat,r.lng],Math.max(map.getZoom(),17));
+  setTimeout(()=>{markers[r.id]&&markers[r.id].openPopup()},250);
+  manualPick=false;
 });
 
 /* ---------- Export / import ---------- */

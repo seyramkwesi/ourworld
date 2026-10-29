@@ -8,7 +8,8 @@ It runs entirely in the browser. There is no server, no account and no build ste
 
 - **Live meter**: A-weighted or flat (Z) level from the phone microphone, with a 30-second trace.
 - **Survey readings**: Leq (energy average), Max and L90 (background) over each recording.
-- **Map**: OpenStreetMap with colour-coded points, filters by source type, and popups showing whether each reading broke the day or night limit.
+- **Map**: full-colour OpenStreetMap streets or Esri satellite imagery, with colour-coded points, filters by source type, and popups showing whether each reading broke the day or night limit.
+- **Automatic location**: while the microphone is on, the app follows your phone's GPS (blue dot) and pins each reading where you recorded it. Tap the map to place a pin by hand instead.
 - **Limits**: Ghana EPA ambient noise levels in dB(A). Residential is 55 by day (6am–10pm) and 48 at night. Health & schools, mixed-use and commercial zones are also available.
 - **By-source summary**: ranks each church or other source by average level and counts how often it exceeded the limit.
 - **Export & import**: CSV and GeoJSON. Combine several surveyors' files into one map; duplicates are skipped. GeoJSON opens in QGIS or Google My Maps.
@@ -20,7 +21,7 @@ Open the GitHub Pages link for this repo on a phone, then:
 
 1. Tap **Start microphone** and allow access.
 2. Stand where residents are exposed (a doorway or the street, not under the speaker) and tap **Record** for 30–60 seconds.
-3. Enter the source name, type and distance, tap **Use my GPS** (or tap the map), then **Save reading**.
+3. Enter the source name, type and distance, then **Save reading**. Your GPS location is added automatically; tap the map if you want to move the pin.
 
 The microphone and GPS only work over HTTPS. GitHub Pages provides that automatically.
 
