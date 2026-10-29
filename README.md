@@ -6,7 +6,7 @@ It runs entirely in the browser. There is no server, no account and no build ste
 
 ## Features
 
-- **Live meter**: A-weighted or flat (Z) level from the phone microphone, with a 30-second trace.
+- **Volume meter**: segmented Live and Leq bars on a 30–110 dB scale with peak hold and a red line at the legal limit; A-weighted or flat (Z) level from the phone microphone.
 - **Survey readings**: Leq (energy average), Max and L90 (background) over each recording.
 - **Map**: full-colour OpenStreetMap streets or Esri satellite imagery, with colour-coded points, filters by source type, and popups showing whether each reading broke the day or night limit.
 - **Automatic location**: while the microphone is on, the app follows your phone's GPS (blue dot) and pins each reading where you recorded it. Tap the map to place a pin by hand instead.

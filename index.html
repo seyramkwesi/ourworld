@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <style>
 /* Layout: a technical drawing. Light grey blueprint grid with red construction lines; giant wordmark hero;
-   the meter is a radial frequency "burst" with four labelled endpoints; white app cards for tagging and the
+   the meter is a segmented volume meter (live + Leq bars) on a dB scale; white app cards for tagging and the
    readings chart; a black map section; ranked sources in ruled columns; mono annotations throughout. */
 :root{
   --paper:#d3d1cc; --paper-2:#c9c7c1; --grid:rgba(40,38,34,.09); --rule:#b4b1aa; --ink:#111110; --ink-2:#3b3a37; --muted:#6c6a64;
@@ -112,35 +112,39 @@ section.blk{position:relative;padding-block:64px;border-top:1px solid var(--rule
 /* Instrument */
 .instrument{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;align-items:start}
 @media (max-width:960px){.instrument{grid-template-columns:minmax(0,1fr)}}
-.burst-wrap{position:relative;aspect-ratio:1;width:100%;max-width:560px;margin:0 auto}
-#burst{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-#burst .spoke{stroke:var(--ink-2);stroke-width:1;vector-effect:non-scaling-stroke;transform-box:view-box;transform-origin:0 0;transition:transform 140ms linear}
-#burst .tip{fill:var(--ink);transform-box:view-box;transform-origin:0 0;transition:transform 140ms linear}
-#burst .ring2{fill:none;stroke:var(--red);stroke-width:1;vector-effect:non-scaling-stroke;stroke-dasharray:2 6;transform-box:view-box;transform-origin:0 0}
-.recording #burst .ring2{animation:spin 24s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-#burst .axis{stroke:var(--rule);stroke-width:1;vector-effect:non-scaling-stroke}
-#burst .lim{fill:none;stroke:var(--red);stroke-width:1.2;vector-effect:non-scaling-stroke;stroke-dasharray:4 4}
-.core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:36%;aspect-ratio:1;border-radius:50%;background:var(--white);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;box-shadow:0 0 0 1px var(--ink),0 18px 40px -20px rgba(0,0,0,.35)}
-.core .num{font:500 clamp(2.2rem,8vw,4.2rem)/.9 var(--grotesk);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
-.core .unit{font:500 .66rem var(--mono);color:var(--muted)}
-.core .band{font:500 .6rem var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.ep{position:absolute;display:flex;flex-direction:column;gap:2px;font-family:var(--mono);font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)}
-.ep b{font:500 1.05rem var(--grotesk);letter-spacing:-.02em;text-transform:none;color:var(--ink);font-variant-numeric:tabular-nums}
-.ep::before{content:"";width:9px;height:9px;border-radius:50%;box-shadow:inset 0 0 0 1.2px var(--ink);background:var(--paper);order:-1}
-.ep.n{left:50%;top:0;transform:translate(-50%,-100%);align-items:center}
-.ep.s{left:50%;bottom:0;transform:translate(-50%,100%);align-items:center}
-.ep.s::before{order:3}
-.ep.w{left:0;top:50%;transform:translate(-100%,-50%);align-items:flex-end}
-.ep.e{right:0;top:50%;transform:translate(100%,-50%);align-items:flex-start}
-.burst-box{padding:58px 64px}
-@media (max-width:700px){.burst-box{padding:58px 0}.ep.w{transform:none;top:0;align-items:flex-start}.ep.e{transform:none;top:0;align-items:flex-end}}
-.ctrl{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:4px}
+.vu{background:var(--white);border-radius:30px;padding:20px 22px 22px;box-shadow:0 30px 60px -38px rgba(0,0,0,.35),0 0 0 1px rgba(0,0,0,.04);min-width:0}
+.vu-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px}
+.vu-head .left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.recdot{width:8px;height:8px;border-radius:50%;background:var(--rule)}
+.recording .recdot{background:var(--red);animation:blink 1s steps(2,start) infinite}
+@keyframes blink{to{visibility:hidden}}
+.bandchip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;background:#f0eeea;font:500 .62rem var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.bandchip i{width:8px;height:8px;border-radius:50%;background:var(--rule)}
+.pct{background:var(--ink);color:var(--white);border-radius:10px;padding:6px 11px;font:500 .9rem var(--mono);font-variant-numeric:tabular-nums;text-align:right;flex:none}
+.pct small{display:block;font-size:.54rem;color:#a8a69f;letter-spacing:.06em;text-transform:uppercase}
+.vu-body{--h:clamp(280px,46vh,400px);display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:14px 18px;align-items:start}
+.scale{position:relative;height:var(--h);width:34px}
+.scale span{position:absolute;right:0;transform:translateY(50%);font:400 .62rem var(--mono);color:var(--muted);display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums}
+.scale span::after{content:"";width:6px;height:1px;background:var(--rule)}
+.bars{position:relative;height:var(--h);display:flex;gap:10px}
+.bar{width:clamp(40px,8vw,58px);height:100%;display:flex;flex-direction:column-reverse;gap:2px}
+.vseg{flex:1;border-radius:2px;background:rgba(17,17,16,.07);transition:background-color 70ms linear;min-height:0}
+.vseg.peak{background:var(--ink)!important}
+.limline{position:absolute;left:-8px;right:-8px;height:0;border-top:1.5px dashed var(--red);pointer-events:none;z-index:2}
+.limline span{position:absolute;right:-6px;top:-9px;transform:translateX(100%);font:500 .58rem var(--mono);color:#fff;background:var(--red);padding:2px 5px;border-radius:2px;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
+.barlbls{grid-column:2;display:flex;gap:10px;margin-top:-4px}
+.barlbls span{width:clamp(40px,8vw,58px);text-align:center}
+.readout{display:flex;flex-direction:column;gap:6px;min-width:0;padding-left:64px}
+.readout .num{font:500 clamp(3.4rem,11vw,6rem)/.85 var(--grotesk);letter-spacing:-.055em;font-variant-numeric:tabular-nums}
+.readout .unit{font:500 .7rem var(--mono);color:var(--muted)}
+.vstats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;margin:18px 0 0;background:#e7e4de;border-radius:14px;overflow:hidden}
+.vstats div{background:var(--white);padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.vstats dt{font:500 .6rem var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.vstats dd{margin:0;font:500 1.2rem var(--grotesk);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+@media (max-width:560px){.readout{padding-left:52px}.vstats dd{font-size:1.05rem}.vu{padding:18px 16px}.vu-body{gap:12px 12px}}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
 .statusline{display:flex;justify-content:center;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap;text-align:center}
 .statusline .ann{max-width:52ch}
-.pct{position:absolute;left:0;top:0;background:var(--ink);color:var(--white);border-radius:10px;padding:8px 12px;font:500 .9rem var(--mono);font-variant-numeric:tabular-nums;z-index:2}
-.pct small{display:block;font-size:.56rem;color:#a8a69f;letter-spacing:.06em;text-transform:uppercase}
 
 /* App cards */
 .stack{display:flex;flex-direction:column;gap:16px;min-width:0}
@@ -275,8 +279,8 @@ footer .ann{max-width:40ch}
   html{scroll-behavior:auto}
   .hero .ctor circle{animation:none;stroke-dashoffset:0}
   .word span,.ruler::before{animation:none}
-  .recording #burst .ring2{animation:none}
-  #burst .spoke,#burst .tip{transition:none}
+  .recording .recdot{animation:none}
+  .vseg{transition:none}
 }
 </style>
 </head>
@@ -321,27 +325,33 @@ footer .ann{max-width:40ch}
       <div class="shead">
         <span class="idx">02</span>
         <h2>Measure</h2>
-        <p class="ann"><span class="slash">/</span>Each spoke is a frequency band from your microphone, low to high. The dashed red ring is the legal limit right now.</p>
+        <p class="ann"><span class="slash">/</span>Live shows the level right now; Leq is the running average of your recording. The dashed red line is the legal limit right now.</p>
       </div>
       <div class="instrument">
         <div style="position:relative" id="instr">
-          <div class="burst-box">
-            <div class="burst-wrap">
-              <svg id="burst" viewBox="-300 -300 600 600" aria-hidden="true">
-                <line class="axis" x1="-300" y1="0" x2="300" y2="0"/><line class="axis" x1="0" y1="-300" x2="0" y2="300"/>
-                <circle class="ring2" r="112"/>
-                <circle class="lim" id="limCircle" r="200"/>
-                <g id="spokes"></g>
-              </svg>
-              <div class="core">
-                <span class="band" id="band">Ready</span>
+          <div class="vu" aria-label="Volume meter">
+            <div class="vu-head">
+              <div class="left"><span class="recdot" aria-hidden="true"></span><span class="lbl">Level meter</span><span class="bandchip"><i id="bandDot"></i><span id="band">Ready</span></span></div>
+              <div class="pct"><small>Recorded</small><span id="pct">000%</span></div>
+            </div>
+            <div class="vu-body">
+              <div class="scale" id="vuScale" aria-hidden="true"></div>
+              <div class="bars" aria-hidden="true">
+                <div class="bar" id="barLive"></div>
+                <div class="bar" id="barLeq"></div>
+                <div class="limline" id="limLine"><span id="limTxt">Limit 55</span></div>
+              </div>
+              <div class="readout">
                 <span class="num" id="live">—</span>
                 <span class="unit" id="liveUnit">dB(A)</span>
+                <dl class="vstats">
+                  <div><dt>Leq</dt><dd id="sLeq">--</dd></div>
+                  <div><dt>Max</dt><dd id="sMax">--</dd></div>
+                  <div><dt>L90</dt><dd id="sL90">--</dd></div>
+                  <div><dt>Time</dt><dd id="sDur">0:00</dd></div>
+                </dl>
               </div>
-              <div class="ep n"><span>Leq</span><b id="sLeq">--</b></div>
-              <div class="ep e"><span>Max</span><b id="sMax">--</b></div>
-              <div class="ep s"><span>L90</span><b id="sL90">--</b></div>
-              <div class="ep w"><span>Time</span><b id="sDur">0:00</b></div>
+              <div class="barlbls lbl"><span>Live</span><span>Leq</span></div>
             </div>
           </div>
           <div class="ctrl">
@@ -351,7 +361,6 @@ footer .ann{max-width:40ch}
           </div>
           <div class="statusline"><span class="lbl" id="wLabel">A-weighted</span><span class="lbl">·</span><span class="lbl" id="limitNow">Limit 55 dB · day</span></div>
           <div class="statusline"><p class="ann" id="micMsg">Stand where residents live, not under the speaker. Record 30–60 seconds.</p></div>
-          <div class="pct"><small>Recorded</small><span id="pct">000%</span></div>
         </div>
 
         <div class="stack">
@@ -556,42 +565,33 @@ const mmss=s=>Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
 function updateWLabel(){const a=settings.weighting==="A";$("wLabel").textContent=a?"A-weighted":"Unweighted (Z)";$("liveUnit").textContent=a?"dB(A)":"dB(Z)"}
 updateWLabel();
 
-/* ---------- Burst (radial spectrum) ----------
-   Each spoke is a <line> from (0,0) to (1,0) placed with a transform attribute-free CSS transform:
-   rotate → translate out to the core edge → scaleX to its length. */
-const N_SPOKES=96,R0=118,RMAX=290,LVL_MIN=30,LVL_MAX=110;
-const spokes=[];
-(function(){
-  const g=$("spokes"),ns="http://www.w3.org/2000/svg";
-  for(let i=0;i<N_SPOKES;i++){
-    const a=i/N_SPOKES*360-90;
-    const ln=document.createElementNS(ns,"line");ln.setAttribute("class","spoke");ln.setAttribute("x1","0");ln.setAttribute("y1","0");ln.setAttribute("x2","1");ln.setAttribute("y2","0");
-    const tp=document.createElementNS(ns,"circle");tp.setAttribute("class","tip");tp.setAttribute("r","2");
-    g.appendChild(ln);g.appendChild(tp);spokes.push({a,ln,tp});
-  }
-})();
-function radiusFor(db){return R0+Math.min(1,Math.max(0,(db-LVL_MIN)/(LVL_MAX-LVL_MIN)))*(RMAX-R0)}
-function setSpokes(lens){
-  spokes.forEach((s,i)=>{
-    const L=Math.max(4,lens[i]);
-    s.ln.style.transform=`rotate(${s.a}deg) translateX(${R0}px) scaleX(${L})`;
-    s.tp.style.transform=`rotate(${s.a}deg) translateX(${R0+L}px)`;
+/* ---------- Volume meter ----------
+   Two segmented bars on a 30–110 dB scale, 2 dB per segment. Live has fast attack, slower release and a peak-hold
+   segment; Leq shows the running energy average of the current recording. */
+const VU_MIN=30,VU_MAX=110,VU_STEP=2,VU_N=(VU_MAX-VU_MIN)/VU_STEP;
+function mkBar(el){const segs=[];for(let i=0;i<VU_N;i++){const d=document.createElement("i");d.className="vseg";el.appendChild(d);segs.push({el:d,lvl:VU_MIN+(i+1)*VU_STEP,on:false})}return segs}
+const segLive=mkBar($("barLive")),segLeq=mkBar($("barLeq"));
+(function(){const sc=$("vuScale");for(let v=VU_MIN;v<=VU_MAX;v+=10){const sp=document.createElement("span");sp.style.bottom=((v-VU_MIN)/(VU_MAX-VU_MIN)*100)+"%";sp.textContent=v;sc.appendChild(sp)}})();
+function fillBar(segs,level,peak){
+  const n=level==null?0:Math.max(0,Math.min(VU_N,Math.round((level-VU_MIN)/VU_STEP)));
+  const pk=peak==null?-1:Math.max(0,Math.min(VU_N,Math.round((peak-VU_MIN)/VU_STEP)))-1;
+  segs.forEach((s,i)=>{
+    const on=i<n;
+    if(on!==s.on){s.on=on;s.el.style.backgroundColor=on?`var(${bandOf(s.lvl-1).v})`:""}
+    s.el.classList.toggle("peak",i===pk&&pk>=n);
   });
 }
-function idleSpokes(){
-  const lens=[];for(let i=0;i<N_SPOKES;i++){const t=i/N_SPOKES*Math.PI*2;lens.push(22+12*Math.sin(t*3)+9*Math.sin(t*7+1)+7*Math.cos(t*11))}
-  setSpokes(lens);
-}
-idleSpokes();
+let disp=null,peak=null,peakT=0;
+function resetMeter(){disp=null;peak=null;fillBar(segLive,null,null)}
 function placeLimit(){
   const lim=limitFor(Date.now());
   $("limitNow").textContent=`Limit ${lim} dB · ${isDay(Date.now())?"day":"night"}`;
-  $("limCircle").setAttribute("r",radiusFor(lim).toFixed(1));
+  $("limLine").style.bottom=((lim-VU_MIN)/(VU_MAX-VU_MIN)*100)+"%";$("limTxt").textContent="Limit "+lim;
 }
 placeLimit();
 
 /* ---------- Audio meter ---------- */
-let ctx=null,stream=null,analyser=null,timeBuf,freqBuf,aw=null,timer=null,wakeLock=null,binEdges=[];
+let ctx=null,stream=null,analyser=null,timeBuf,freqBuf,aw=null,timer=null,wakeLock=null;
 let recording=false,samples=[],recStart=0;
 
 function aWeight(f){
@@ -613,8 +613,6 @@ async function startMic(){
   aw=new Float32Array(analyser.frequencyBinCount);
   const binHz=ctx.sampleRate/analyser.fftSize;
   for(let i=0;i<aw.length;i++) aw[i]=aWeight(i*binHz);
-  const half=N_SPOKES/2;binEdges=[];
-  for(let k=0;k<=half;k++){binEdges.push(Math.max(1,Math.round(60*Math.pow(12000/60,k/half)/binHz)))}
   timer=setInterval(tick,125);
   startWatch(!readings.length);
   try{if("wakeLock" in navigator) wakeLock=await navigator.wakeLock.request("screen")}catch(e){}
@@ -631,7 +629,7 @@ function stopMic(){
   stopWatch();
   $("btnMic").textContent="Start microphone";$("btnMic").classList.remove("line");
   $("btnRec").disabled=true;$("btnRec").classList.add("line");$("btnRec").classList.remove("red");
-  $("live").textContent="—";setBand(null);idleSpokes();$("micMsg").textContent="Microphone off.";
+  $("live").textContent="—";setBand(null);resetMeter();$("micMsg").textContent="Microphone off.";
 }
 function tick(){
   analyser.getFloatTimeDomainData(timeBuf);
@@ -646,20 +644,15 @@ function tick(){
   }
   lvl=Math.max(0,lvl);
   if(recording) samples.push(lvl);
-  // Spectrum → spokes. Overall length follows the level, so the burst reaches the red limit ring when the level does.
-  const half=N_SPOKES/2,base=radiusFor(lvl)-R0,lens=new Array(N_SPOKES);
-  for(let k=0;k<half;k++){
-    let mx=-140;const hiB=Math.max(binEdges[k],binEdges[k+1]-1);
-    for(let b=binEdges[k];b<=hiB&&b<freqBuf.length;b++){if(freqBuf[b]>mx)mx=freqBuf[b]}
-    const rel=Math.min(1,Math.max(0,(mx+100)/70));
-    const L=base*(0.72+0.6*rel);
-    lens[k]=L;lens[N_SPOKES-1-k]=L;
-  }
-  setSpokes(lens);
-  $("live").textContent=lvl.toFixed(0);setBand(lvl);
+  // Meter ballistics: instant rise, ~24 dB/s fall; peak holds 1.5 s then falls.
+  const now=performance.now();
+  disp=(disp==null||lvl>=disp)?lvl:Math.max(lvl,disp-3);
+  if(peak==null||lvl>=peak){peak=lvl;peakT=now}else if(now-peakT>1500){peak=Math.max(disp,peak-2)}
+  fillBar(segLive,disp,peak);
+  $("live").textContent=disp.toFixed(0);setBand(lvl);
   if(recording||samples.length) updateStats();
 }
-function setBand(v){const b=bandOf(v);$("band").textContent=b.name;$("band").style.color=b.v?`var(${b.v})`:""}
+function setBand(v){const b=bandOf(v);$("band").textContent=b.name;$("bandDot").style.background=b.v?`var(${b.v})`:""}
 function sessionStats(){
   if(!samples.length) return null;
   const sorted=samples.slice().sort((a,b)=>a-b);
@@ -670,6 +663,7 @@ function updateStats(){
   $("sLeq").textContent=s?fmt1(s.leq):"--";$("sMax").textContent=s?fmt1(s.lmax):"--";$("sL90").textContent=s?fmt1(s.l90):"--";
   $("sDur").textContent=mmss(d);
   $("pct").textContent=String(Math.min(100,Math.round(d/TARGET*100))).padStart(3,"0")+"%";
+  fillBar(segLeq,s?s.leq:null,null);
 }
 function toggleRec(){
   if(!ctx) return;
