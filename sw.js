@@ -1,6 +1,6 @@
 // Community Noise Map service worker: makes the app open offline.
 // Bump VERSION whenever index.html or other app files change.
-const VERSION = "v2";
+const VERSION = "v3";
 const APP = "noisemap-app-" + VERSION;
 const CDN = "noisemap-cdn-v1";
 const TILES = "noisemap-tiles-v1";
@@ -22,7 +22,12 @@ const APP_FILES = [
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(APP).then((c) => c.addAll(APP_FILES)).then(() => self.skipWaiting()));
+  // cache: "reload" skips the browser's HTTP cache so a new version never stores stale files.
+  e.waitUntil(
+    caches.open(APP)
+      .then((c) => c.addAll(APP_FILES.map((u) => new Request(u, { cache: "reload" }))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", (e) => {
@@ -44,10 +49,10 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
 
-  // App pages: network first so updates arrive, cache when offline.
+  // App files: network first (revalidated with the server) so updates arrive; cache when offline.
   if (url.origin === self.location.origin) {
     e.respondWith(
-      fetch(req)
+      fetch(req, { cache: "no-cache" })
         .then((res) => {
           if (res.ok) { const copy = res.clone(); caches.open(APP).then((c) => c.put(req, copy)); }
           return res;
