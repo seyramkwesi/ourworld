@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Community Noise Map</title>
 <meta name="description" content="Measure sound levels with your phone, tag them to a location and map noise from churches and other sources in your community.">
-<meta name="theme-color" content="#1c2321">
+<meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Noise Map">
@@ -15,259 +15,489 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Lexend+Deca:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <style>
-/* Layout: instrument panel (meter + save form) beside a full-height map; readings ledger below. */
+/* Layout: black field-survey sections (hero, measure, map) with a lime marquee band as the dB legend,
+   then a cream "results" band; a lime route line with numbered stops 01–04 runs down the left edge. */
 :root{
-  --bg:#f3f4f1; --panel:#ffffff; --ink:#1c2321; --muted:#5d6865; --line:#d9ddd8;
-  --accent:#d9861c; --accent-ink:#1c2321; --track:#e7eae5;
-  --q:#2f9e62; --m:#c9b11b; --l:#e07b1f; --vl:#cf3a2a; --x:#7b2a8f;
-  --font-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
-  --font-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --font-data:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
-  --r:10px;
+  --black:#000; --coal:#121211; --coal-2:#1c1c1a; --line:#2b2b27; --ghost:#1a1a18;
+  --lime:#ddf240; --lime-ink:#0b0b0a; --olive:#4a4b2f; --sand:#c7a882;
+  --cream:#f4f2e9; --cream-2:#e8e4d4; --ink:#0b0b0a; --white:#ffffff; --grey:#8b8a80; --grey-2:#5c5b54;
+  --q:#7fd8a4; --m:#f2d64b; --l:#f5913c; --vl:#ef4f4f; --x:#b98cff;
+  --display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --body:"Lexend Deca",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"DM Mono",ui-monospace,Menlo,Consolas,monospace;
+  --ease-out:cubic-bezier(0.23,1,0.32,1);
+  --ease-in-out:cubic-bezier(0.77,0,0.175,1);
+  --r-xl:28px; --r-lg:20px; --r-md:14px;
+  color-scheme:dark;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#121614; --panel:#1b211f; --ink:#e8ece9; --muted:#9aa5a1; --line:#2c3431;
-  --accent:#f0a23a; --accent-ink:#121614; --track:#262e2b; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#121614; --panel:#1b211f; --ink:#e8ece9; --muted:#9aa5a1; --line:#2c3431;
-  --accent:#f0a23a; --accent-ink:#121614; --track:#262e2b; color-scheme:dark}
-
 *{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;scroll-padding-top:84px;overflow-x:clip}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--font-body);
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
-  padding-block:16px 40px}
-h1,h2,h3{font-family:var(--font-display);font-weight:600;letter-spacing:.01em;text-wrap:balance;margin:0;line-height:1.1}
-h1{font-size:2rem} h2{font-size:1.4rem} h3{font-size:1.1rem}
-.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
-header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 16px}
-header.top p{margin:0;color:var(--muted);max-width:60ch}
-.label{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
-.data{font-family:var(--font-data);font-variant-numeric:tabular-nums}
+body{background:var(--black);color:var(--white);font:16px/1.55 var(--body);font-weight:300;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:1001;background:var(--black)}
+h1,h2,h3{font-family:var(--display);font-weight:800;margin:0;line-height:.98;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+a{color:inherit}
+.gutter{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.inner{max-width:1240px;margin:0 auto;position:relative}
+.eyebrow{font:500 .74rem/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--grey)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+button,.btn{font:500 .92rem/1 var(--body);cursor:pointer;border:0;border-radius:999px;display:inline-flex;align-items:center;gap:10px;
+  padding:12px 18px;background:var(--coal-2);color:var(--white);text-decoration:none;
+  transition:transform 140ms var(--ease-out),background-color 200ms ease,color 200ms ease}
+button:active,.btn:active{transform:scale(.97)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--lime);outline-offset:3px}
+.btn-lime{background:var(--lime);color:var(--lime-ink);font-weight:600}
+.btn-ghost{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
+.btn-rec{background:var(--vl);color:#fff}
+.btn-sm{padding:9px 14px;font-size:.84rem}
+.arrow{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--lime-ink);color:var(--lime);flex:none;margin:-6px -10px -6px 0;
+  transition:transform 200ms var(--ease-out)}
+.btn-ghost .arrow,.btn:not(.btn-lime) .arrow{background:var(--lime);color:var(--lime-ink)}
+.arrow svg{width:12px;height:12px}
+@media (hover:hover) and (pointer:fine){
+  .btn:hover .arrow,button:hover .arrow{transform:rotate(45deg)}
+  .btn-ghost:hover,button:not(.btn-lime):not(.btn-rec):not(:disabled):hover{background:#2a2a26}
+}
 
-.grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:16px;align-items:stretch}
-@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+/* Floating nav */
+.nav{position:fixed;z-index:1000;top:calc(env(safe-area-inset-top,0px) + 12px);left:0;right:0;pointer-events:none}
+.nav .inner{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pill-group{pointer-events:auto;display:flex;align-items:center;gap:4px;padding:5px;border-radius:999px;background:rgba(18,18,17,.78);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.brand{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;font:600 .84rem var(--body);text-decoration:none}
+.brand img{width:28px;height:28px;border-radius:8px}
+.nav a.navlink{font:500 .82rem var(--body);padding:8px 12px;border-radius:999px;text-decoration:none;color:var(--white);transition:background-color 200ms ease}
+.nav a.navlink:hover{background:rgba(255,255,255,.08)}
+@media (max-width:520px){.nav a.navlink.hide-sm{display:none}}
 
-/* Meter */
-.meter{display:flex;flex-direction:column;gap:10px}
-.readout{display:flex;align-items:baseline;gap:8px}
-.readout .num{font-family:var(--font-display);font-weight:700;font-size:5.2rem;line-height:.9;font-variant-numeric:tabular-nums;min-width:3.2ch}
-.readout .unit{font-family:var(--font-display);font-size:1.5rem;color:var(--muted)}
-.band{display:inline-block;padding:2px 10px;border-radius:999px;font-weight:700;font-size:.8rem;color:#fff;background:var(--muted)}
-.scale{position:relative;height:18px;border-radius:4px;overflow:hidden;background:linear-gradient(90deg,var(--q) 0 45%,var(--m) 45% 58%,var(--l) 58% 70%,var(--vl) 70% 82%,var(--x) 82% 100%);opacity:.9}
-.scale .cover{position:absolute;inset:0 0 0 auto;background:var(--track);transition:width .1s linear}
-.scale .limit{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink)}
-.ticks{display:flex;justify-content:space-between;font-family:var(--font-data);font-size:.7rem;color:var(--muted)}
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.stat{display:flex;flex-direction:column;gap:2px}
-.stat .v{font-family:var(--font-data);font-size:1.05rem;font-weight:600}
-canvas#trace{width:100%;height:60px;display:block;border-radius:6px;background:var(--track)}
+/* Hero */
+.hero{position:relative;overflow:hidden;padding-block:calc(env(safe-area-inset-top,0px) + 120px) 72px;isolation:isolate}
+#topo{position:absolute;inset:-60px;width:calc(100% + 120px);height:calc(100% + 120px);z-index:-1;opacity:.9;animation:drift 60s linear infinite alternate}
+@keyframes drift{to{transform:translate3d(-40px,24px,0)}}
+.hero h1{font-size:clamp(3rem,11vw,9.6rem);text-transform:uppercase;line-height:.9;margin-block:18px 26px}
+.hero h1 .ln{display:block;overflow:hidden;padding-bottom:.04em}
+.hero h1 .ln>span{display:block;animation:rise 900ms var(--ease-out) both}
+.hero h1 .ln:nth-child(2)>span{animation-delay:70ms;color:var(--lime)}
+@keyframes rise{from{transform:translateY(105%)}}
+.lede{font-size:clamp(1.25rem,2.6vw,2rem);line-height:1.25;font-weight:400;max-width:26ch;color:var(--white);animation:fade 900ms 160ms var(--ease-out) both}
+.lede .dim{color:var(--grey-2)}
+@keyframes fade{from{opacity:0;transform:translateY(12px)}}
+.cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;animation:fade 900ms 240ms var(--ease-out) both}
+.hero-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin-top:56px;border-radius:var(--r-lg);overflow:hidden;background:var(--line);
+  animation:fade 900ms 320ms var(--ease-out) both}
+.hero-stats div{background:rgba(18,18,17,.92);padding:18px 18px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.hero-stats b{font:800 clamp(1.5rem,4vw,2.6rem)/1 var(--display);font-variant-numeric:tabular-nums}
+.hero-stats b.hot{color:var(--lime)}
+@media (max-width:700px){.hero-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-button,.btn{font:600 .95rem var(--font-body);border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:9px 14px;cursor:pointer}
-button:hover{border-color:var(--muted)}
-button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-button.rec{background:var(--vl);border-color:var(--vl);color:#fff}
-button:disabled{opacity:.45;cursor:not-allowed}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.small{font-size:.85rem;padding:6px 10px}
+/* Lime marquee band = legend */
+.band-outer{overflow:hidden;padding-block:24px;margin-block:-24px;position:relative;z-index:2}
+.band-wrap{margin-inline:-6%;transform:rotate(-2deg);overflow:hidden}
+.band{background:var(--lime);color:var(--lime-ink);padding-block:14px;display:flex;width:max-content;animation:marquee 38s linear infinite}
+.band-wrap:hover .band{animation-play-state:paused}
+.band ul{display:flex;gap:36px;list-style:none;margin:0;padding:0 18px;font:800 clamp(1rem,2.2vw,1.4rem)/1 var(--display);text-transform:uppercase;white-space:nowrap}
+.band li{display:flex;align-items:center;gap:12px}
+.band li i{width:14px;height:14px;border-radius:50%;display:inline-block;box-shadow:inset 0 0 0 2px var(--lime-ink)}
+.band li small{font:500 .8rem var(--mono);opacity:.75}
+@keyframes marquee{to{transform:translateX(-50%)}}
 
-form{display:flex;flex-direction:column;gap:10px}
-.field{display:flex;flex-direction:column;gap:4px;min-width:0}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-input,select,textarea{font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
-textarea{resize:vertical;min-height:56px}
-.loc{font-family:var(--font-data);font-size:.82rem;color:var(--muted)}
-.msg{font-size:.9rem;color:var(--muted);min-height:1.3em}
+/* Sections + route line */
+section.blk{position:relative;padding-block:88px}
+.route{position:absolute;left:6px;top:0;bottom:0;width:2px;pointer-events:none}
+.route::before{content:"";position:absolute;inset:0;background:var(--line)}
+.route::after{content:"";position:absolute;inset:0;background:var(--lime);transform-origin:top;transform:scaleY(1)}
+@supports (animation-timeline:view()){
+  .route::after{transform:scaleY(0);animation:draw linear both;animation-timeline:view();animation-range:entry 10% cover 60%}
+}
+@keyframes draw{to{transform:scaleY(1)}}
+.stop{display:flex;align-items:flex-start;gap:16px;margin-bottom:34px;position:relative}
+.stop .num{font:600 .9rem var(--mono);color:var(--grey);padding-top:.5em;min-width:2ch}
+.stop h2{font-size:clamp(2rem,6vw,4.2rem);text-transform:uppercase;color:var(--lime)}
+.stop p{color:var(--grey);margin-top:12px;max-width:52ch}
+.stop .dot{position:absolute;left:-29px;top:.7em;width:12px;height:12px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 5px var(--black)}
+.blk .content{padding-left:28px}
+@media (max-width:700px){.blk .content{padding-left:22px}.stop .dot{left:-23px}}
+
+/* Reveal on scroll (progressive: fully visible without support) */
+@supports (animation-timeline:view()){
+  .reveal{animation:reveal linear both;animation-timeline:view();animation-range:entry 0% entry 35%}
+  @keyframes reveal{from{opacity:0;transform:translateY(40px) scale(.98)}}
+}
+
+/* Measure */
+.measure-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:940px){.measure-grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--coal);border-radius:var(--r-xl);padding:24px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);min-width:0}
+.meter-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;font:500 .78rem var(--body);background:var(--coal-2);color:var(--white)}
+.chip i{width:9px;height:9px;border-radius:50%;background:var(--grey);transition:background-color 120ms ease}
+.ringbox{position:relative;width:min(100%,380px);aspect-ratio:220/186;margin:18px auto 0;max-width:100%}
+.ringbox .readout{inset:0 0 9% 0}
+#ring{width:100%;height:100%;display:block;overflow:visible}
+#ring circle.d{fill:var(--line);transition:fill 120ms ease}
+#ring circle.lim{fill:none;stroke:var(--white);stroke-width:1.5}
+.readout{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
+.readout .num{font:800 clamp(4.2rem,15vw,6.4rem)/.9 var(--display);font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.readout .unit{font:500 .9rem var(--mono);color:var(--grey)}
+.readout .bandname{font:600 .8rem var(--body);text-transform:uppercase;letter-spacing:.14em}
+canvas#trace{width:100%;height:72px;display:block;margin-top:14px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
+.stat{background:var(--coal-2);border-radius:var(--r-md);padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.stat .v{font:500 1.15rem var(--mono);font-variant-numeric:tabular-nums}
+@media (max-width:420px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.msg{font-size:.88rem;color:var(--grey);min-height:1.4em;margin-top:10px}
 .msg.err{color:var(--vl)}
-details summary{cursor:pointer;font-weight:600}
-details[open] summary{margin-bottom:8px}
+.msg.ok{color:var(--lime)}
+
+form{display:flex;flex-direction:column;gap:14px}
+.card h3{font-size:1.5rem;text-transform:uppercase}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+label.eyebrow{display:block}
+input,select,textarea{font:400 .95rem var(--body);color:var(--white);background:var(--coal-2);border:0;box-shadow:inset 0 0 0 1px var(--line);
+  border-radius:var(--r-md);padding:12px 14px;width:100%;transition:box-shadow 200ms ease}
+input:hover,select:hover,textarea:hover{box-shadow:inset 0 0 0 1px var(--grey-2)}
+input::placeholder,textarea::placeholder{color:var(--grey-2)}
+textarea{resize:vertical;min-height:72px}
+.loc{font:400 .82rem var(--mono);color:var(--grey);word-break:break-word}
+details.cal{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+details.cal summary{cursor:pointer;font:500 .9rem var(--body);list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.cal summary::-webkit-details-marker{display:none}
+details.cal summary::after{content:"+";font:400 1.3rem var(--mono);color:var(--lime);transition:transform 200ms var(--ease-out)}
+details.cal[open] summary::after{transform:rotate(45deg)}
+details.cal .body{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+.note{font-size:.84rem;color:var(--grey);max-width:68ch}
 
 /* Map */
-.mapwrap{position:relative;min-height:520px;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);display:flex;flex-direction:column}
-#map{flex:1;min-height:520px;background:var(--track)}
-@media (max-width:880px){#map,.mapwrap{min-height:420px}}
-.maptools{display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:var(--panel);border-bottom:1px solid var(--line)}
-.chip{font:600 .82rem var(--font-body);padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
-.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.legend{position:absolute;right:10px;bottom:22px;z-index:500;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.78rem;display:flex;flex-direction:column;gap:3px}
-.legend span{display:flex;align-items:center;gap:6px}
-.dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none}
-.leaflet-popup-content{font:14px/1.45 var(--font-body)}
-.leaflet-popup-content b{font-family:var(--font-display);font-size:1.15rem}
+.ghost{position:absolute;left:0;right:0;top:40px;overflow:hidden;pointer-events:none;z-index:0}
+.ghost .track{display:flex;width:max-content;animation:marquee 60s linear infinite}
+.ghost span{font:800 clamp(5rem,18vw,13rem)/1 var(--display);text-transform:uppercase;white-space:nowrap;color:var(--ghost);padding-right:.4em}
+.blk .content{position:relative;z-index:1}
+.mapcard{position:relative;border-radius:var(--r-xl);overflow:hidden;background:var(--coal);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+#map{height:min(68vh,620px);min-height:420px;background:#151513}
+.leaflet-tile-pane{filter:invert(1) grayscale(1) brightness(.78) contrast(1.15)}
+.leaflet-container{font-family:var(--body)}
+.leaflet-control-zoom a{background:var(--coal)!important;color:var(--white)!important;border-color:var(--line)!important}
+.leaflet-control-attribution{background:rgba(0,0,0,.6)!important;color:var(--grey)!important}
+.leaflet-control-attribution a{color:var(--white)!important}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--coal);color:var(--white);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.leaflet-popup-content-wrapper{border-radius:var(--r-lg)}
+.leaflet-popup-content{font:300 .9rem/1.5 var(--body);margin:16px 18px}
+.leaflet-popup-content b{font:800 1.05rem/1.15 var(--display);text-transform:uppercase;display:block;margin-bottom:6px}
+.leaflet-container a.leaflet-popup-close-button{color:var(--grey)}
+.filters{position:absolute;z-index:500;top:12px;left:12px;right:12px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.filters::-webkit-scrollbar{display:none}
+.fchip{flex:none;font:500 .8rem var(--body);padding:8px 13px;border-radius:999px;background:rgba(18,18,17,.82);color:var(--white);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.fchip[aria-pressed="true"]{background:var(--lime);color:var(--lime-ink);box-shadow:none}
+.fchip[aria-pressed="false"]{color:var(--grey)}
+.popup-over{color:var(--vl);font-weight:500}
+.popup-ok{color:var(--q)}
+.tag{font:500 .66rem var(--body);text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:999px;background:var(--sand);color:var(--ink);vertical-align:2px}
 
-/* Ledger */
-.notice{background:var(--track);border-radius:8px;padding:10px 12px;font-size:.92rem;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
-.tablewrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:.92rem}
-th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
-th{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
-td.num,th.num{text-align:right;font-family:var(--font-data);font-variant-numeric:tabular-nums}
-.over{color:var(--vl);font-weight:700}
-.tag{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:1px 6px;border-radius:4px;background:var(--track);color:var(--muted)}
-.empty{color:var(--muted);padding:12px 0}
-.ledger{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
-@media (max-width:980px){.ledger{grid-template-columns:minmax(0,1fr)}}
-.note{font-size:.85rem;color:var(--muted);max-width:75ch}
-@media (prefers-reduced-motion:reduce){.scale .cover{transition:none}}
+/* Cream results band */
+.cream{background:var(--cream);color:var(--ink);border-radius:var(--r-xl) var(--r-xl) 0 0;margin-top:-28px;position:relative;z-index:3}
+.cream .ghost span{color:var(--cream-2)}
+.cream .route::before{background:var(--cream-2)}
+.cream .route::after{background:var(--ink)}
+.cream .stop .num{color:var(--grey-2)}
+.cream .stop h2{color:var(--ink)}
+.cream .stop p{color:var(--grey-2)}
+.cream .stop .dot{background:var(--ink);box-shadow:0 0 0 5px var(--cream)}
+.notice{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;background:var(--sand);color:var(--ink);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:22px;font-size:.92rem}
+.notice button{background:var(--ink);color:var(--cream)}
+.sources{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(260px,320px);gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:12px;margin-inline:-4px;padding-inline:4px}
+.scard{scroll-snap-align:start;border-radius:var(--r-xl);overflow:hidden;background:var(--white);display:flex;flex-direction:column;min-height:300px;
+  box-shadow:0 1px 0 rgba(0,0,0,.04);transition:transform 250ms var(--ease-out)}
+@media (hover:hover) and (pointer:fine){.scard:hover{transform:translateY(-4px)}}
+.scard .top{padding:18px 18px 0;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.scard .datepill{font:500 .74rem var(--body);background:var(--lime);color:var(--lime-ink);padding:5px 10px;border-radius:999px}
+.scard .cat{font:500 .74rem var(--body);color:var(--grey-2)}
+.scard .big{padding:22px 18px 8px;font:800 4rem/.9 var(--display);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.scard .big small{font:500 .85rem var(--mono);letter-spacing:0;color:var(--grey-2);margin-left:4px}
+.scard .meta{padding:0 18px 16px;font:400 .82rem var(--mono);color:var(--grey-2)}
+.scard .foot{margin-top:auto;padding:18px;color:var(--ink)}
+.scard .foot h4{margin:0;font:800 1.15rem/1.05 var(--display);text-transform:uppercase;overflow-wrap:anywhere}
+.scard .foot span{display:block;margin-top:6px;font:500 .8rem var(--body)}
+.empty{color:var(--grey-2);padding:16px 0}
+.tbl-head{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;margin:54px 0 14px}
+.tbl-head h3{font-size:1.5rem;text-transform:uppercase}
+.tbl-actions{display:flex;flex-wrap:wrap;gap:8px}
+.cream .btn,.cream button{background:var(--ink);color:var(--cream)}
+.cream .btn .arrow{background:var(--lime);color:var(--lime-ink)}
+.tablewrap{overflow-x:auto;background:var(--white);border-radius:var(--r-xl);padding:6px 10px}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:13px 10px;border-bottom:1px solid var(--cream-2);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th{font:500 .7rem var(--body);text-transform:uppercase;letter-spacing:.12em;color:var(--grey-2)}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+tbody tr{cursor:pointer;transition:background-color 150ms ease}
+@media (hover:hover){tbody tr:hover{background:var(--cream)}}
+td .lvl{display:inline-flex;align-items:center;gap:8px}
+td .lvl i{width:10px;height:10px;border-radius:50%}
+.over{color:#c62f2f;font-weight:500}
+td button{padding:7px 12px;font-size:.78rem}
+.cream .msg{color:var(--grey-2)}
+
+footer{background:var(--cream);color:var(--ink)}
+footer .fwrap{background:var(--black);color:var(--white);border-radius:var(--r-xl) var(--r-xl) 0 0;padding-block:56px calc(40px + env(safe-area-inset-bottom,0px))}
+footer .big{font:800 clamp(2.6rem,10vw,7rem)/.9 var(--display);text-transform:uppercase;color:var(--lime)}
+footer .cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:40px}
+@media (max-width:760px){footer .cols{grid-template-columns:minmax(0,1fr)}}
+footer .cols p{color:var(--grey);font-size:.9rem}
+footer .cols h4{margin:0 0 8px;font:600 .74rem var(--body);letter-spacing:.14em;text-transform:uppercase}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  #topo,.band,.ghost .track{animation:none}
+  .hero h1 .ln>span,.lede,.cta,.hero-stats{animation:fade 300ms ease both}
+  @keyframes fade{from{opacity:0}}
+  .reveal{animation:none}
+  .route::after{animation:none;transform:scaleY(1)}
+  .scard,.arrow{transition:none}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div>
-      <div class="label">Community sound survey</div>
-      <h1>Community Noise Map</h1>
+
+<nav class="nav gutter" aria-label="Main">
+  <div class="inner">
+    <div class="pill-group">
+      <a class="brand" href="#top"><img src="icons/icon-192.png" alt="">Noise Map</a>
     </div>
-    <button type="button" id="btnInstall" class="small" hidden>Install app</button>
-    <p>Stand where residents live, record 30–60 seconds, tag the source and save. Each reading lands on the map, coloured by its average level in dB(A).</p>
-  </header>
-
-  <div class="grid">
-    <!-- Instrument panel -->
-    <section class="panel" aria-label="Sound meter">
-      <div class="meter">
-        <div class="row" style="justify-content:space-between">
-          <span class="label">Live level · <span id="wLabel">A-weighted</span></span>
-          <span class="band" id="band">Idle</span>
-        </div>
-        <div class="readout"><span class="num" id="live">--</span><span class="unit" id="liveUnit">dB(A)</span></div>
-        <div class="scale" aria-hidden="true"><div class="cover" id="cover" style="width:100%"></div><div class="limit" id="limitMark"></div></div>
-        <div class="ticks" aria-hidden="true"><span>30</span><span>50</span><span>70</span><span>90</span><span>110</span></div>
-        <canvas id="trace" aria-hidden="true"></canvas>
-        <div class="stats">
-          <div class="stat"><span class="label">Leq</span><span class="v" id="sLeq">--</span></div>
-          <div class="stat"><span class="label">Max</span><span class="v" id="sMax">--</span></div>
-          <div class="stat"><span class="label">L90</span><span class="v" id="sL90">--</span></div>
-          <div class="stat"><span class="label">Time</span><span class="v" id="sDur">0:00</span></div>
-        </div>
-        <div class="row">
-          <button class="primary" id="btnMic" type="button">Start microphone</button>
-          <button id="btnRec" type="button" disabled>Record</button>
-          <button id="btnReset" type="button" class="small" disabled>Reset</button>
-        </div>
-        <div class="msg" id="micMsg"></div>
-      </div>
-
-      <form id="form" autocomplete="off">
-        <h2>Save this reading</h2>
-        <div class="field">
-          <label class="label" for="place">Source name</label>
-          <input id="place" required placeholder="e.g. church on 5th Lane, Sunday service">
-        </div>
-        <div class="two">
-          <div class="field">
-            <label class="label" for="category">Source type</label>
-            <select id="category">
-              <option>Church</option><option>Mosque</option><option>Event / party</option>
-              <option>Bar / club</option><option>Traffic</option><option>Market / trader</option>
-              <option>Generator / industry</option><option>Other</option>
-            </select>
-          </div>
-          <div class="field">
-            <label class="label" for="distance">Distance to source (m)</label>
-            <input id="distance" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 20">
-          </div>
-        </div>
-        <div class="field">
-          <span class="label">Location</span>
-          <div class="row">
-            <button type="button" id="btnGps" class="small">Use my GPS</button>
-            <span class="loc" id="locText">Not set. Use GPS or tap the map.</span>
-          </div>
-        </div>
-        <div class="field">
-          <label class="label" for="notes">Notes</label>
-          <textarea id="notes" placeholder="Activity, speakers outside, windows open, time of service…"></textarea>
-        </div>
-        <button class="primary" id="btnSave" type="submit">Save reading</button>
-        <div class="msg" id="saveMsg"></div>
-      </form>
-
-      <details>
-        <summary>Settings &amp; calibration</summary>
-        <div class="field">
-          <label class="label" for="offset">Calibration offset (dB)</label>
-          <input id="offset" type="number" step="0.5" value="100">
-          <span class="note">Phone microphones are not calibrated. Hold the phone beside a real sound level meter, then adjust this number until both show the same reading. Use the same offset on every phone in the survey.</span>
-        </div>
-        <div class="two">
-          <div class="field">
-            <label class="label" for="weighting">Weighting</label>
-            <select id="weighting"><option value="A">A (human hearing)</option><option value="Z">Z (flat)</option></select>
-          </div>
-          <div class="field">
-            <label class="label" for="zone">Compare against</label>
-            <select id="zone">
-              <option value="res">Residential 55 / 48</option>
-              <option value="edu">Health &amp; schools 55 / 50</option>
-              <option value="mix">Mixed use 60 / 55</option>
-              <option value="com">Commercial 75 / 65</option>
-            </select>
-          </div>
-        </div>
-        <span class="note">Limits are Ghana EPA ambient noise levels in dB(A), day (6am–10pm) / night.</span>
-      </details>
-    </section>
-
-    <!-- Map -->
-    <section class="mapwrap" aria-label="Noise map">
-      <div class="maptools" id="filters" role="group" aria-label="Filter by source type"></div>
-      <div id="map"></div>
-      <div class="legend" aria-label="Legend">
-        <span><i class="dot" style="background:var(--q)"></i>&lt; 55 quiet</span>
-        <span><i class="dot" style="background:var(--m)"></i>55–65 noticeable</span>
-        <span><i class="dot" style="background:var(--l)"></i>65–75 loud</span>
-        <span><i class="dot" style="background:var(--vl)"></i>75–85 very loud</span>
-        <span><i class="dot" style="background:var(--x)"></i>85+ harmful</span>
-      </div>
-    </section>
+    <div class="pill-group">
+      <a class="navlink" href="#measure">Measure</a>
+      <a class="navlink" href="#map-sec">Map</a>
+      <a class="navlink hide-sm" href="#results">Results</a>
+      <button type="button" id="btnInstall" class="btn-lime btn-sm" hidden>Install</button>
+    </div>
   </div>
+</nav>
 
-  <div class="notice" id="exampleNotice" hidden>
-    <span>The map is showing example readings so you can see how it works. They disappear when you save your first real reading.</span>
-    <button class="small" id="btnHideEx" type="button">Hide examples</button>
+<header class="hero gutter" id="top">
+  <canvas id="topo" aria-hidden="true"></canvas>
+  <div class="inner">
+    <div class="eyebrow">Community sound survey · Ghana EPA limits</div>
+    <h1><span class="ln"><span>Map the</span></span><span class="ln"><span>Noise</span></span></h1>
+    <p class="lede">Measure sound with your phone, pin it to the street it came from, <span class="dim">and see which churches, speakers and roads break the limit.</span></p>
+    <div class="cta">
+      <a class="btn btn-lime" href="#measure">Start measuring <span class="arrow"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a>
+      <a class="btn btn-ghost" href="#map-sec">See the map <span class="arrow"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a>
+    </div>
+    <div class="hero-stats" id="heroStats" aria-live="polite">
+      <div><span class="eyebrow">Readings</span><b id="hsReadings">0</b></div>
+      <div><span class="eyebrow">Sources</span><b id="hsSources">0</b></div>
+      <div><span class="eyebrow">Over limit</span><b id="hsOver" class="hot">0%</b></div>
+      <div><span class="eyebrow">Loudest Leq</span><b id="hsMax">--</b></div>
+    </div>
   </div>
+</header>
 
-  <div class="ledger">
-    <section class="panel" aria-label="Summary by source">
-      <div class="row" style="justify-content:space-between">
-        <h2>By source</h2>
-        <span class="label" id="sumCount"></span>
-      </div>
-      <div class="tablewrap"><table id="sumTable"><thead><tr>
-        <th>Source</th><th>Type</th><th class="num">Visits</th><th class="num">Avg Leq</th><th class="num">Peak</th><th class="num">Over limit</th>
-      </tr></thead><tbody></tbody></table></div>
-    </section>
-    <section class="panel" aria-label="All readings">
-      <div class="row" style="justify-content:space-between">
-        <h2>All readings</h2>
-        <div class="row">
-          <button class="small" id="btnCsv" type="button">Export CSV</button>
-          <button class="small" id="btnGeo" type="button">Export GeoJSON</button>
-          <label class="btn small" for="importFile">Import</label>
-          <input id="importFile" type="file" accept=".csv,.json,.geojson" hidden>
+<div class="band-outer"><div class="band-wrap" aria-label="Loudness bands in dB(A)">
+  <div class="band" aria-hidden="true"></div>
+</div></div>
+
+<main>
+  <!-- 01 Measure + 02 Tag -->
+  <section class="blk gutter" id="measure">
+    <div class="inner">
+      <div class="route" aria-hidden="true"></div>
+      <div class="content">
+        <div class="stop">
+          <i class="dot" aria-hidden="true"></i><span class="num">01</span>
+          <div>
+            <h2>Measure</h2>
+            <p>Stand where residents live, not under the speaker. Record 30 to 60 seconds and let the meter build an average.</p>
+          </div>
+        </div>
+
+        <div class="measure-grid">
+          <div class="card reveal" aria-label="Sound meter">
+            <div class="meter-top">
+              <span class="eyebrow">Live level · <span id="wLabel">A-weighted</span></span>
+              <span class="chip"><i id="bandDot"></i><span id="limitNow">Limit now 55 dB</span></span>
+            </div>
+            <div class="ringbox">
+              <svg id="ring" viewBox="-110 -110 220 186" aria-hidden="true"></svg>
+              <div class="readout">
+                <span class="bandname" id="band">Idle</span>
+                <span class="num" id="live">--</span>
+                <span class="unit" id="liveUnit">dB(A)</span>
+              </div>
+            </div>
+            <canvas id="trace" aria-hidden="true"></canvas>
+            <div class="stats">
+              <div class="stat"><span class="eyebrow">Leq</span><span class="v" id="sLeq">--</span></div>
+              <div class="stat"><span class="eyebrow">Max</span><span class="v" id="sMax">--</span></div>
+              <div class="stat"><span class="eyebrow">L90</span><span class="v" id="sL90">--</span></div>
+              <div class="stat"><span class="eyebrow">Time</span><span class="v" id="sDur">0:00</span></div>
+            </div>
+            <div class="controls">
+              <button class="btn-lime" id="btnMic" type="button">Start microphone</button>
+              <button id="btnRec" type="button" disabled>Record</button>
+              <button id="btnReset" type="button" class="btn-ghost" disabled>Reset</button>
+            </div>
+            <div class="msg" id="micMsg"></div>
+
+            <details class="cal">
+              <summary>Calibration &amp; limits</summary>
+              <div class="body">
+                <div class="field">
+                  <label class="eyebrow" for="offset">Calibration offset (dB)</label>
+                  <input id="offset" type="number" step="0.5" value="100">
+                  <span class="note">Phone microphones aren't calibrated. Hold the phone beside a real sound level meter and adjust this until both match. Use the same offset on every phone in the survey.</span>
+                </div>
+                <div class="two">
+                  <div class="field">
+                    <label class="eyebrow" for="weighting">Weighting</label>
+                    <select id="weighting"><option value="A">A (human hearing)</option><option value="Z">Z (flat)</option></select>
+                  </div>
+                  <div class="field">
+                    <label class="eyebrow" for="zone">Compare against</label>
+                    <select id="zone">
+                      <option value="res">Residential 55 / 48</option>
+                      <option value="edu">Health &amp; schools 55 / 50</option>
+                      <option value="mix">Mixed use 60 / 55</option>
+                      <option value="com">Commercial 75 / 65</option>
+                    </select>
+                  </div>
+                </div>
+                <span class="note">Ghana EPA ambient limits in dB(A), day (6am–10pm) / night.</span>
+              </div>
+            </details>
+          </div>
+
+          <div class="card reveal">
+            <div class="stop" style="margin-bottom:22px">
+              <span class="num">02</span>
+              <div><h3>Tag it</h3><p style="margin-top:8px">Name the source and pin where you stood.</p></div>
+            </div>
+            <form id="form" autocomplete="off">
+              <div class="field">
+                <label class="eyebrow" for="place">Source name</label>
+                <input id="place" required placeholder="e.g. church on 5th Lane, Sunday service">
+              </div>
+              <div class="two">
+                <div class="field">
+                  <label class="eyebrow" for="category">Source type</label>
+                  <select id="category">
+                    <option>Church</option><option>Mosque</option><option>Event / party</option>
+                    <option>Bar / club</option><option>Traffic</option><option>Market / trader</option>
+                    <option>Generator / industry</option><option>Other</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="eyebrow" for="distance">Distance to source (m)</label>
+                  <input id="distance" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 20">
+                </div>
+              </div>
+              <div class="field">
+                <span class="eyebrow">Location</span>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                  <button type="button" id="btnGps" class="btn-sm">Use my GPS</button>
+                  <span class="loc" id="locText">Not set. Use GPS or tap the map.</span>
+                </div>
+              </div>
+              <div class="field">
+                <label class="eyebrow" for="notes">Notes</label>
+                <textarea id="notes" placeholder="Speakers outside, windows open, time of service…"></textarea>
+              </div>
+              <button class="btn-lime" id="btnSave" type="submit" style="align-self:flex-start">Save reading <span class="arrow"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9 9 3M4 3h5v5"/></svg></span></button>
+              <div class="msg" id="saveMsg"></div>
+            </form>
+          </div>
         </div>
       </div>
-      <div class="tablewrap"><table id="readTable"><thead><tr>
-        <th>When</th><th>Source</th><th class="num">Leq</th><th class="num">Max</th><th class="num">Limit</th><th class="num">Dist</th><th></th>
-      </tr></thead><tbody></tbody></table></div>
-      <div class="msg" id="ioMsg"></div>
-    </section>
-  </div>
+    </div>
+  </section>
 
-  <p class="note">Readings are stored on this device. To build one shared map, each surveyor exports a CSV and one person imports them all; duplicates are skipped. Phone readings are indicative, good for spotting patterns and choosing where to take certified measurements.</p>
-</div>
+  <!-- 03 Map -->
+  <section class="blk gutter" id="map-sec" style="padding-bottom:120px">
+    <div class="ghost" aria-hidden="true"><div class="track"><span>Noise map · </span><span>Noise map · </span><span>Noise map · </span><span>Noise map · </span></div></div>
+    <div class="inner">
+      <div class="route" aria-hidden="true"></div>
+      <div class="content">
+        <div class="stop" style="margin-top:110px">
+          <i class="dot" aria-hidden="true"></i><span class="num">03</span>
+          <div>
+            <h2>Map</h2>
+            <p>Every saved reading lands here, sized and coloured by its average level. Tap a point to see whether it broke the limit.</p>
+          </div>
+        </div>
+        <div class="mapcard reveal">
+          <div class="filters" id="filters" role="group" aria-label="Filter by source type"></div>
+          <div id="map" aria-label="Noise map"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 Compare -->
+  <section class="blk gutter cream" id="results">
+    <div class="ghost" aria-hidden="true"><div class="track" style="animation-direction:reverse"><span>By source · </span><span>By source · </span><span>By source · </span><span>By source · </span></div></div>
+    <div class="inner">
+      <div class="route" aria-hidden="true"></div>
+      <div class="content">
+        <div class="stop" style="margin-top:110px">
+          <i class="dot" aria-hidden="true"></i><span class="num">04</span>
+          <div>
+            <h2>Compare</h2>
+            <p>Sources ranked loudest first, by energy-averaged Leq across every visit. <span id="sumCount"></span></p>
+          </div>
+        </div>
+
+        <div class="notice" id="exampleNotice" hidden>
+          <span>These are example readings so you can see how it works. They disappear when you save your first real reading.</span>
+          <button class="btn-sm" id="btnHideEx" type="button">Hide examples</button>
+        </div>
+
+        <div class="sources" id="sources"></div>
+
+        <div class="tbl-head">
+          <h3>All readings</h3>
+          <div class="tbl-actions">
+            <button class="btn-sm" id="btnCsv" type="button">Export CSV</button>
+            <button class="btn-sm" id="btnGeo" type="button">Export GeoJSON</button>
+            <label class="btn btn-sm" for="importFile">Import <span class="arrow"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9 9 3M4 3h5v5"/></svg></span></label>
+            <input id="importFile" type="file" accept=".csv,.json,.geojson" hidden>
+          </div>
+        </div>
+        <div class="tablewrap"><table id="readTable"><thead><tr>
+          <th>When</th><th>Source</th><th class="num">Leq</th><th class="num">Max</th><th class="num">Limit</th><th class="num">Dist</th><th></th>
+        </tr></thead><tbody></tbody></table></div>
+        <div class="msg" id="ioMsg"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="fwrap gutter">
+    <div class="inner">
+      <div class="big">Quieter<br>streets</div>
+      <div class="cols">
+        <div><h4>Your data</h4><p>Readings stay on this phone until you export them. Export a CSV after each session, then one person imports everyone's files to build a combined map. Duplicates are skipped.</p></div>
+        <div><h4>Accuracy</h4><p>Phone readings are indicative. Calibrate against a real meter, and follow up hotspots with certified measurements before taking action.</p></div>
+        <div><h4>Credits</h4><p>Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors. Built with <a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a>. Limits from Ghana EPA ambient noise standards.</p></div>
+      </div>
+    </div>
+  </div>
+</footer>
 
 <script src="vendor/leaflet/leaflet.js"></script>
 <script>
 (function(){
 "use strict";
 const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const store = {
   get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
   set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
@@ -275,6 +505,13 @@ const store = {
 const KEY="noisemap.readings.v1", SKEY="noisemap.settings.v1";
 const ZONES={res:[55,48],edu:[55,50],mix:[60,55],com:[75,65]};
 const CATS=["Church","Mosque","Event / party","Bar / club","Traffic","Market / trader","Generator / industry","Other"];
+const BANDS=[
+  {max:55,name:"Quiet",v:"--q",range:"< 55"},
+  {max:65,name:"Noticeable",v:"--m",range:"55–65"},
+  {max:75,name:"Loud",v:"--l",range:"65–75"},
+  {max:85,name:"Very loud",v:"--vl",range:"75–85"},
+  {max:1e9,name:"Harmful",v:"--x",range:"85+"}
+];
 
 let settings=Object.assign({offset:100,weighting:"A",zone:"res",hideEx:false},store.get(SKEY,{}));
 let readings=store.get(KEY,[]);
@@ -282,7 +519,50 @@ $("offset").value=settings.offset; $("weighting").value=settings.weighting; $("z
 function saveSettings(){store.set(SKEY,settings)}
 $("offset").addEventListener("change",e=>{const v=parseFloat(e.target.value);if(!isNaN(v)){settings.offset=v;saveSettings()}});
 $("weighting").addEventListener("change",e=>{settings.weighting=e.target.value;saveSettings();updateWLabel()});
-$("zone").addEventListener("change",e=>{settings.zone=e.target.value;saveSettings();renderAll();placeLimitMark()});
+$("zone").addEventListener("change",e=>{settings.zone=e.target.value;saveSettings();renderAll();placeLimit()});
+
+/* ---------- Marquee band (legend) ---------- */
+(function(){
+  const ul=()=>"<ul>"+BANDS.map(b=>`<li><i style="background:var(${b.v})"></i>${b.name} <small>${b.range} dB</small></li>`).join("")+"</ul>";
+  document.querySelector(".band").innerHTML=ul()+ul()+ul()+ul();
+})();
+
+/* ---------- Topographic background ---------- */
+function drawTopo(){
+  const c=$("topo"),dpr=Math.min(2,window.devicePixelRatio||1),w=c.clientWidth,h=c.clientHeight;
+  c.width=w*dpr;c.height=h*dpr;const g=c.getContext("2d");g.scale(dpr,dpr);
+  const centers=[[w*.78,h*.32],[w*.15,h*.85],[w*.5,h*1.1]];
+  g.lineWidth=1;
+  centers.forEach((ct,ci)=>{
+    for(let k=1;k<26;k++){
+      const base=k*26+ci*8;g.beginPath();
+      for(let a=0;a<=Math.PI*2+0.01;a+=Math.PI/90){
+        const n=Math.sin(a*3+k*.35+ci)*10+Math.sin(a*5-k*.2)*6+Math.cos(a*2+ci*2)*k*1.4;
+        const r=base+n,x=ct[0]+Math.cos(a)*r*1.25,y=ct[1]+Math.sin(a)*r;
+        a?g.lineTo(x,y):g.moveTo(x,y);
+      }
+      g.strokeStyle=k%5===0?"rgba(221,242,64,.16)":"rgba(255,255,255,.06)";g.stroke();
+    }
+  });
+}
+drawTopo();
+let tt;window.addEventListener("resize",()=>{clearTimeout(tt);tt=setTimeout(drawTopo,200)});
+
+/* ---------- Dot ring ---------- */
+const RING_N=48,RING_MIN=30,RING_MAX=110;
+const ringDots=[];
+(function(){
+  const svg=$("ring"),ns="http://www.w3.org/2000/svg";
+  for(let i=0;i<RING_N;i++){
+    const a=-Math.PI*1.25+i/(RING_N-1)*Math.PI*1.5,c=document.createElementNS(ns,"circle");
+    c.setAttribute("cx",(Math.cos(a)*96).toFixed(2));c.setAttribute("cy",(Math.sin(a)*96).toFixed(2));c.setAttribute("r","4.2");c.setAttribute("class","d");
+    svg.appendChild(c);ringDots.push({el:c,level:RING_MIN+i/(RING_N-1)*(RING_MAX-RING_MIN)});
+  }
+  const lim=document.createElementNS(ns,"circle");lim.setAttribute("r","8");lim.setAttribute("class","lim");lim.id="limRing";svg.appendChild(lim);
+})();
+function setRing(lvl){
+  ringDots.forEach(d=>{d.el.style.fill=(lvl!=null&&d.level<=lvl)?`var(${bandOf(d.level).v})`:""});
+}
 
 /* ---------- Example data (shown only until the first real reading) ---------- */
 function examples(){
@@ -307,12 +587,8 @@ function visible(){
 /* ---------- Helpers ---------- */
 const fmt1=v=>v==null||!isFinite(v)?"--":v.toFixed(1);
 function bandOf(v){
-  if(v==null||!isFinite(v)) return {name:"Idle",c:"var(--muted)",hex:"#888"};
-  if(v<55) return {name:"Quiet",c:"var(--q)",hex:"#2f9e62"};
-  if(v<65) return {name:"Noticeable",c:"var(--m)",hex:"#c9b11b"};
-  if(v<75) return {name:"Loud",c:"var(--l)",hex:"#e07b1f"};
-  if(v<85) return {name:"Very loud",c:"var(--vl)",hex:"#cf3a2a"};
-  return {name:"Harmful",c:"var(--x)",hex:"#7b2a8f"};
+  if(v==null||!isFinite(v)) return {name:"Idle",v:"--grey",hex:css("--grey")};
+  const b=BANDS.find(b=>v<b.max);return {name:b.name,v:b.v,hex:css(b.v)};
 }
 function isDay(ts){const h=new Date(ts).getHours();return h>=6&&h<22}
 function limitFor(ts){const z=ZONES[settings.zone]||ZONES.res;return isDay(ts)?z[0]:z[1]}
@@ -331,8 +607,7 @@ function aWeight(f){
   if(f<=0) return 0;
   const f2=f*f;
   const ra=(12194**2*f2*f2)/((f2+20.6**2)*Math.sqrt((f2+107.7**2)*(f2+737.9**2))*(f2+12194**2));
-  const db=20*Math.log10(ra)+2.0;
-  return Math.pow(10,db/10);
+  return Math.pow(10,(20*Math.log10(ra)+2.0)/10);
 }
 async function startMic(){
   const msg=$("micMsg");
@@ -354,9 +629,9 @@ async function startMic(){
   for(let i=0;i<aw.length;i++) aw[i]=aWeight(i*binHz);
   timer=setInterval(tick,125);
   try{if("wakeLock" in navigator) wakeLock=await navigator.wakeLock.request("screen")}catch(e){}
-  msg.textContent="Microphone on. Point it toward the source, keep your hand off the mic hole.";msg.className="msg";
-  $("btnMic").textContent="Stop microphone";$("btnMic").classList.remove("primary");
-  $("btnRec").disabled=false;$("btnReset").disabled=false;
+  msg.textContent="Microphone on. Point it toward the source and keep your hand off the mic hole.";msg.className="msg";
+  $("btnMic").textContent="Stop microphone";$("btnMic").classList.remove("btn-lime");
+  $("btnRec").disabled=false;$("btnRec").classList.add("btn-lime");$("btnReset").disabled=false;
 }
 function stopMic(){
   if(recording) toggleRec();
@@ -364,8 +639,8 @@ function stopMic(){
   if(stream) stream.getTracks().forEach(t=>t.stop());
   if(ctx) ctx.close();ctx=null;stream=null;
   try{wakeLock&&wakeLock.release()}catch(e){} wakeLock=null;
-  $("btnMic").textContent="Start microphone";$("btnMic").classList.add("primary");
-  $("btnRec").disabled=true;$("live").textContent="--";setBand(null);$("cover").style.width="100%";
+  $("btnMic").textContent="Start microphone";$("btnMic").classList.add("btn-lime");
+  $("btnRec").disabled=true;$("btnRec").classList.remove("btn-lime");$("live").textContent="--";setBand(null);setRing(null);
   $("micMsg").textContent="";
 }
 function tick(){
@@ -384,11 +659,9 @@ function tick(){
   if(recording) samples.push(lvl);
   render(lvl);
 }
-function setBand(v){const b=bandOf(v);const el=$("band");el.textContent=b.name;el.style.background=b.c}
+function setBand(v){const b=bandOf(v);$("band").textContent=b.name;$("band").style.color=`var(${b.v})`;$("bandDot").style.background=`var(${b.v})`}
 function render(lvl){
-  $("live").textContent=lvl.toFixed(0);setBand(lvl);
-  const pct=Math.min(100,Math.max(0,(lvl-30)/80*100));
-  $("cover").style.width=(100-pct)+"%";
+  $("live").textContent=lvl.toFixed(0);setBand(lvl);setRing(lvl);
   drawTrace();
   if(recording||samples.length) updateStats();
 }
@@ -404,41 +677,53 @@ function updateStats(){
 }
 function drawTrace(){
   const c=$("trace"),dpr=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;
-  if(c.width!==w*dpr){c.width=w*dpr;c.height=h*dpr}
+  if(!w)return;
+  if(c.width!==Math.round(w*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr)}
   const g=c.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
-  const cs=getComputedStyle(document.documentElement);
-  const lim=limitFor(Date.now()),ly=h-(lim-30)/80*h;
-  g.strokeStyle=cs.getPropertyValue("--muted");g.setLineDash([3,3]);g.beginPath();g.moveTo(0,ly);g.lineTo(w,ly);g.stroke();g.setLineDash([]);
+  const y=v=>h-4-Math.min(1,Math.max(0,(v-30)/80))*(h-8);
+  const ly=y(limitFor(Date.now()));
+  g.fillStyle=css("--grey-2");
+  for(let x=0;x<w;x+=8){g.beginPath();g.arc(x+2,ly,1.2,0,Math.PI*2);g.fill()}
   if(liveHistory.length<2) return;
-  g.strokeStyle=cs.getPropertyValue("--accent");g.lineWidth=2;g.beginPath();
-  liveHistory.forEach((v,i)=>{const x=i/(240-1)*w,y=h-Math.min(1,Math.max(0,(v-30)/80))*h;i?g.lineTo(x,y):g.moveTo(x,y)});
+  g.strokeStyle=css("--lime");g.lineWidth=2;g.lineJoin="round";g.beginPath();
+  liveHistory.forEach((v,i)=>{const x=i/239*w;i?g.lineTo(x,y(v)):g.moveTo(x,y(v))});
   g.stroke();
+  const lx=(liveHistory.length-1)/239*w,lyv=y(liveHistory[liveHistory.length-1]);
+  g.fillStyle=css("--white");g.beginPath();g.arc(lx,lyv,4,0,Math.PI*2);g.fill();
 }
-function placeLimitMark(){const lim=limitFor(Date.now());$("limitMark").style.left=((lim-30)/80*100)+"%";$("limitMark").title="Limit now: "+lim+" dB(A)"}
-placeLimitMark();
+function placeLimit(){
+  const lim=limitFor(Date.now());
+  $("limitNow").textContent=`Limit now ${lim} dB · ${isDay(Date.now())?"day":"night"}`;
+  const t=(lim-RING_MIN)/(RING_MAX-RING_MIN),a=-Math.PI*1.25+t*Math.PI*1.5,r=$("limRing");
+  r.setAttribute("cx",(Math.cos(a)*96).toFixed(2));r.setAttribute("cy",(Math.sin(a)*96).toFixed(2));
+}
+placeLimit();
 function toggleRec(){
   recording=!recording;
   const b=$("btnRec");
   if(recording){
     if(!samples.length) recStart=Date.now();
-    b.textContent="Pause";b.classList.add("rec");
+    b.textContent="Pause";b.classList.add("btn-rec");b.classList.remove("btn-lime");
     $("micMsg").textContent="Recording. Aim for at least 30 seconds.";$("micMsg").className="msg";
-  }else{b.textContent=samples.length?"Resume":"Record";b.classList.remove("rec")}
+  }else{b.textContent=samples.length?"Resume":"Record";b.classList.remove("btn-rec");b.classList.add("btn-lime")}
 }
 $("btnMic").addEventListener("click",()=>ctx?stopMic():startMic());
 $("btnRec").addEventListener("click",toggleRec);
 $("btnReset").addEventListener("click",()=>{if(recording)toggleRec();samples=[];$("btnRec").textContent="Record";updateStats();["sLeq","sMax","sL90"].forEach(i=>$(i).textContent="--")});
 new ResizeObserver(drawTrace).observe($("trace"));
+drawTrace();
 
 /* ---------- Map ---------- */
-const map=L.map("map",{zoomControl:true}).setView([5.6037,-0.1870],14);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
+const map=L.map("map",{zoomControl:false,scrollWheelZoom:false}).setView([5.6037,-0.1870],14);
+L.control.zoom({position:"bottomright"}).addTo(map);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+map.on("focus",()=>map.scrollWheelZoom.enable());map.on("blur",()=>map.scrollWheelZoom.disable());
 const layer=L.layerGroup().addTo(map);
 let pick=null,pickMarker=null,activeCats=new Set(CATS);
 
 function setPick(lat,lng,acc,src){
   pick={lat,lng,acc};
-  if(!pickMarker){pickMarker=L.circleMarker([lat,lng],{radius:7,color:"#1c2321",weight:2,fillColor:"#ffffff",fillOpacity:1,dashArray:"2 2"}).addTo(map)}
+  if(!pickMarker){pickMarker=L.circleMarker([lat,lng],{radius:8,color:css("--lime"),weight:2.5,fillColor:"#000",fillOpacity:1,dashArray:"3 3"}).addTo(map)}
   else pickMarker.setLatLng([lat,lng]);
   $("locText").textContent=lat.toFixed(5)+", "+lng.toFixed(5)+(acc?" ± "+Math.round(acc)+" m":"")+" ("+src+")";
 }
@@ -453,7 +738,7 @@ $("btnGps").addEventListener("click",()=>{
 
 function buildFilters(){
   const f=$("filters");f.innerHTML="";
-  CATS.forEach(c=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=c;
+  CATS.forEach(c=>{const b=document.createElement("button");b.type="button";b.className="fchip";b.textContent=c;
     b.setAttribute("aria-pressed",activeCats.has(c));
     b.addEventListener("click",()=>{activeCats.has(c)?activeCats.delete(c):activeCats.add(c);b.setAttribute("aria-pressed",activeCats.has(c));drawMap(false)});
     f.appendChild(b)});
@@ -462,18 +747,19 @@ function drawMap(fit){
   layer.clearLayers();
   const list=visible().filter(r=>activeCats.has(r.category));
   list.slice().sort((a,b)=>a.leq-b.leq).forEach(r=>{
-    const b=bandOf(r.leq),lim=limitFor(r.ts),over=r.leq-lim;
-    L.circleMarker([r.lat,r.lng],{radius:6+Math.max(0,(r.leq-45))/3,color:"#ffffff",weight:1.5,fillColor:b.hex,fillOpacity:.85})
-     .bindPopup(`<b>${esc(r.place)}</b><br>${esc(r.category)}${r.example?' · <span class="tag">Example</span>':''}<br>
-       <span class="data">Leq ${fmt1(r.leq)} · Max ${fmt1(r.lmax)} dB(${esc(r.weighting||"A")})</span><br>
-       ${over>0?`<span class="over">${over.toFixed(1)} dB over the ${lim} dB ${isDay(r.ts)?"day":"night"} limit</span>`:`Within the ${lim} dB ${isDay(r.ts)?"day":"night"} limit`}<br>
+    const b=bandOf(r.leq),lim=limitFor(r.ts),over=r.leq-lim,rad=6+Math.max(0,(r.leq-45))/2.6;
+    L.circleMarker([r.lat,r.lng],{radius:rad*1.9,stroke:false,fillColor:b.hex,fillOpacity:.16,interactive:false}).addTo(layer);
+    L.circleMarker([r.lat,r.lng],{radius:rad,color:"#000",weight:2,fillColor:b.hex,fillOpacity:.95})
+     .bindPopup(`<b>${esc(r.place)}</b>${esc(r.category)}${r.example?' <span class="tag">Example</span>':''}<br>
+       <span class="mono">Leq ${fmt1(r.leq)} · Max ${fmt1(r.lmax)} dB(${esc(r.weighting||"A")})</span><br>
+       ${over>0?`<span class="popup-over">${over.toFixed(1)} dB over the ${lim} dB ${isDay(r.ts)?"day":"night"} limit</span>`:`<span class="popup-ok">Within the ${lim} dB ${isDay(r.ts)?"day":"night"} limit</span>`}<br>
        ${when(r.ts)}${r.distance?` · ${r.distance} m from source`:""}${r.notes&&!r.example?`<br><i>${esc(r.notes)}</i>`:""}`)
      .addTo(layer);
   });
   if(fit&&list.length){map.fitBounds(L.latLngBounds(list.map(r=>[r.lat,r.lng])).pad(.25),{maxZoom:17})}
 }
 
-/* ---------- Tables ---------- */
+/* ---------- Results ---------- */
 function renderTables(){
   const list=visible().slice().sort((a,b)=>b.ts-a.ts);
   const tb=$("readTable").tBodies[0];tb.innerHTML="";
@@ -481,28 +767,37 @@ function renderTables(){
   list.forEach(r=>{
     const lim=limitFor(r.ts),tr=document.createElement("tr");
     tr.innerHTML=`<td>${when(r.ts)}</td><td>${esc(r.place)} ${r.example?'<span class="tag">Example</span>':""}</td>
-      <td class="num ${r.leq>lim?"over":""}">${fmt1(r.leq)}</td><td class="num">${fmt1(r.lmax)}</td><td class="num">${lim}</td>
-      <td class="num">${r.distance?r.distance+" m":"–"}</td><td>${r.example?"":'<button class="small" type="button">Delete</button>'}</td>`;
+      <td class="num ${r.leq>lim?"over":""}"><span class="lvl"><i style="background:var(${bandOf(r.leq).v})"></i>${fmt1(r.leq)}</span></td><td class="num">${fmt1(r.lmax)}</td><td class="num">${lim}</td>
+      <td class="num">${r.distance?r.distance+" m":"–"}</td><td>${r.example?"":'<button type="button">Delete</button>'}</td>`;
     const del=tr.querySelector("button");
     if(del){let armed=false;del.addEventListener("click",()=>{
       if(!armed){armed=true;del.textContent="Confirm";setTimeout(()=>{armed=false;del.textContent="Delete"},3000);return}
       readings=readings.filter(x=>x.id!==r.id);store.set(KEY,readings);renderAll(false)})}
-    tr.addEventListener("click",e=>{if(e.target.tagName!=="BUTTON")map.setView([r.lat,r.lng],17)});
+    tr.addEventListener("click",e=>{if(e.target.tagName!=="BUTTON"){map.setView([r.lat,r.lng],17);document.getElementById("map-sec").scrollIntoView()}});
     tb.appendChild(tr);
   });
-  // Summary by source name
   const groups={};
-  list.forEach(r=>{const k=r.place.trim().toLowerCase().replace(/,.*$/,"");(groups[k]=groups[k]||{name:r.place.replace(/,.*$/,""),cat:r.category,rs:[]}).rs.push(r)});
-  const rows=Object.values(groups).map(g=>({...g,avg:energyAvg(g.rs.map(r=>r.leq)),peak:Math.max(...g.rs.map(r=>r.lmax||r.leq)),over:g.rs.filter(r=>r.leq>limitFor(r.ts)).length}))
+  list.forEach(r=>{const nm=r.place.replace(/,.*$/,"").trim(),k=nm.toLowerCase();(groups[k]=groups[k]||{name:nm,cat:r.category,rs:[]}).rs.push(r)});
+  const rows=Object.values(groups).map(g=>({...g,avg:energyAvg(g.rs.map(r=>r.leq)),peak:Math.max(...g.rs.map(r=>r.lmax||r.leq)),over:g.rs.filter(r=>r.leq>limitFor(r.ts)).length,last:Math.max(...g.rs.map(r=>r.ts))}))
     .sort((a,b)=>b.avg-a.avg);
-  const sb=$("sumTable").tBodies[0];sb.innerHTML="";
-  if(!rows.length) sb.innerHTML='<tr><td colspan="6" class="empty">Sources appear here once you save readings.</td></tr>';
-  rows.forEach(g=>{const tr=document.createElement("tr");
-    tr.innerHTML=`<td><i class="dot" style="background:${bandOf(g.avg).c};margin-right:6px;vertical-align:-1px"></i>${esc(g.name)}</td><td>${esc(g.cat)}</td>
-    <td class="num">${g.rs.length}</td><td class="num ${g.over?"over":""}">${fmt1(g.avg)}</td><td class="num">${fmt1(g.peak)}</td><td class="num">${g.over}/${g.rs.length}</td>`;
-    sb.appendChild(tr)});
-  $("sumCount").textContent=rows.length?rows.length+" source"+(rows.length>1?"s":""):"";
+  const sc=$("sources");sc.innerHTML="";
+  if(!rows.length) sc.innerHTML='<p class="empty">Sources appear here once you save readings.</p>';
+  rows.forEach((g,i)=>{
+    const b=bandOf(g.avg),el=document.createElement("article");el.className="scard";
+    el.innerHTML=`<div class="top"><span class="datepill">${new Date(g.last).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})}</span><span class="cat">#${i+1} · ${esc(g.cat)}</span></div>
+      <div class="big">${fmt1(g.avg)}<small>dB Leq</small></div>
+      <div class="meta">Peak ${fmt1(g.peak)} · ${g.rs.length} visit${g.rs.length>1?"s":""}</div>
+      <div class="foot" style="background:var(${b.v})"><h4>${esc(g.name.replace(/^Example:\s*/,""))}</h4><span>${g.over?`Over the limit on ${g.over} of ${g.rs.length} visits`:"Within the limit on every visit"}${g.rs[0].example?" · Example":""}</span></div>`;
+    sc.appendChild(el);
+  });
+  $("sumCount").textContent=rows.length?`${rows.length} source${rows.length>1?"s":""} so far.`:"";
   $("exampleNotice").hidden=!(list.length&&list[0].example);
+  // hero stats
+  const over=list.filter(r=>r.leq>limitFor(r.ts)).length;
+  $("hsReadings").textContent=list.length;
+  $("hsSources").textContent=rows.length;
+  $("hsOver").textContent=list.length?Math.round(over/list.length*100)+"%":"0%";
+  $("hsMax").textContent=list.length?fmt1(Math.max(...list.map(r=>r.leq))):"--";
 }
 function renderAll(fit){drawMap(fit);renderTables()}
 $("btnHideEx").addEventListener("click",()=>{settings.hideEx=true;saveSettings();renderAll(false)});
@@ -512,7 +807,7 @@ $("form").addEventListener("submit",e=>{
   e.preventDefault();
   const m=$("saveMsg");m.className="msg err";
   const s=sessionStats();
-  if(!s||s.dur<5){m.textContent="Record at least a few seconds first (Start microphone, then Record).";return}
+  if(!s||s.dur<5){m.textContent="Record at least a few seconds first: Start microphone, then Record.";return}
   if(!pick){m.textContent="Set a location first: press Use my GPS or tap the map.";return}
   const r={id:uid(),place:$("place").value.trim(),category:$("category").value,lat:pick.lat,lng:pick.lng,acc:pick.acc,
     leq:+s.leq.toFixed(1),lmax:+s.lmax.toFixed(1),l90:+s.l90.toFixed(1),dur:Math.round(s.dur),weighting:settings.weighting,
@@ -520,7 +815,7 @@ $("form").addEventListener("submit",e=>{
   readings.push(r);store.set(KEY,readings);
   if(recording)toggleRec();samples=[];$("btnRec").textContent="Record";updateStats();
   $("notes").value="";
-  m.className="msg";m.textContent=`Saved: ${r.place}, Leq ${r.leq} dB(${r.weighting}).`;
+  m.className="msg ok";m.textContent=`Saved: ${r.place}, Leq ${r.leq} dB(${r.weighting}).`;
   renderAll(readings.length===1);
 });
 
@@ -577,7 +872,7 @@ $("importFile").addEventListener("change",async e=>{
 });
 
 buildFilters();renderAll(true);
-setInterval(placeLimitMark,60000);
+setInterval(placeLimit,60000);
 
 /* ---------- Install as app ---------- */
 if("serviceWorker" in navigator && location.protocol==="https:"){
