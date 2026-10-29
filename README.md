@@ -6,7 +6,7 @@ It runs entirely in the browser. There is no server, no account and no build ste
 
 ## Features
 
-- **Volume meter**: segmented Live and Leq bars on a 30–110 dB scale with peak hold and a red line at the legal limit; A-weighted or flat (Z) level from the phone microphone.
+- **Cassette meter**: tap the record button (or the cassette) to start the microphone and record; tap again to stop. The cassette label is a watch-style dial: the long hand shows the level now, the short hand the recording's average (Leq), and ticks past the legal limit are red. The reels spin while recording and the tape winds across as you approach 60 seconds.
 - **Survey readings**: Leq (energy average), Max and L90 (background) over each recording.
 - **Map**: full-colour OpenStreetMap streets or Esri satellite imagery, with colour-coded points, filters by source type, and popups showing whether each reading broke the day or night limit.
 - **Automatic location**: while the microphone is on, the app follows your phone's GPS (blue dot) and pins each reading where you recorded it. Tap the map to place a pin by hand instead.
@@ -19,8 +19,8 @@ It runs entirely in the browser. There is no server, no account and no build ste
 
 Open the GitHub Pages link for this repo on a phone, then:
 
-1. Tap **Start microphone** and allow access.
-2. Stand where residents are exposed (a doorway or the street, not under the speaker) and tap **Record** for 30–60 seconds.
+1. Stand where residents are exposed (a doorway or the street, not under the speaker).
+2. Tap the red record button, allow microphone and location access, and record for 30–60 seconds. Tap again to stop.
 3. Enter the source name, type and distance, then **Save reading**. Your GPS location is added automatically; tap the map if you want to move the pin.
 
 The microphone and GPS only work over HTTPS. GitHub Pages provides that automatically.
