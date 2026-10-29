@@ -4,493 +4,434 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Community Noise Map</title>
-<meta name="description" content="Measure sound levels with your phone, tag them to a location and map noise from churches and other sources in your community.">
-<meta name="theme-color" content="#000000">
+<meta name="description" content="A citizen science app: measure sound levels with your phone, tag them to a location and map noise from churches and other sources in your community.">
+<meta name="theme-color" content="#bfa992">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Noise Map">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Lexend+Deca:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <style>
-/* Layout: black field-survey sections (hero, measure, map) with a lime marquee band as the dB legend,
-   then a cream "results" band; a lime route line with numbered stops 01–04 runs down the left edge. */
+/* Layout: a paper "app window" on a taupe field. Left: the map as a dark media card (sticky on desktop)
+   with a recording "player bar". Right: project page — serif title, stat pills, gradient live-meter card,
+   tag form, readings list styled like a lesson list, loudest sources, full table, calibration. */
 :root{
-  --black:#000; --coal:#121211; --coal-2:#1c1c1a; --line:#2b2b27; --ghost:#1a1a18;
-  --lime:#ddf240; --lime-ink:#0b0b0a; --olive:#4a4b2f; --sand:#c7a882;
-  --cream:#f4f2e9; --cream-2:#e8e4d4; --ink:#0b0b0a; --white:#ffffff; --grey:#8b8a80; --grey-2:#5c5b54;
-  --q:#7fd8a4; --m:#f2d64b; --l:#f5913c; --vl:#ef4f4f; --x:#b98cff;
-  --display:"Unbounded","Arial Black",system-ui,sans-serif;
-  --body:"Lexend Deca",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --mono:"DM Mono",ui-monospace,Menlo,Consolas,monospace;
+  --field:#bfa992; --paper:#efede6; --card:#ffffff; --ink:#1d1b18; --muted:#7a756c; --faint:#a39e94;
+  --line:#e3dfd4; --night:#0e1013; --night-2:#1a1d22; --accent:#e2683c; --pill-dark:rgba(20,22,26,.62);
+  --q:#4fa274; --m:#d9a630; --l:#e57a35; --vl:#d1433a; --x:#8b43c4;
+  --serif:"Newsreader","Iowan Old Style","Georgia",serif;
+  --sans:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,Menlo,Consolas,monospace;
   --ease-out:cubic-bezier(0.23,1,0.32,1);
-  --ease-in-out:cubic-bezier(0.77,0,0.175,1);
-  --r-xl:28px; --r-lg:20px; --r-md:14px;
-  color-scheme:dark;
+  --r-win:28px; --r-card:22px; --r-md:14px;
+  color-scheme:light;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html{scroll-behavior:smooth;scroll-padding-top:84px;overflow-x:clip}
+html{overflow-x:clip;scroll-padding-top:16px}
 html,body{margin:0}
-body{background:var(--black);color:var(--white);font:16px/1.55 var(--body);font-weight:300;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:1001;background:var(--black)}
-h1,h2,h3{font-family:var(--display);font-weight:800;margin:0;line-height:.98;text-wrap:balance;letter-spacing:-.01em}
+body{background:var(--field);color:var(--ink);font:15px/1.5 var(--sans);-webkit-font-smoothing:antialiased;
+  padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));
+  padding-block:calc(12px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-bottom,0px))}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:400;margin:0;letter-spacing:-.01em;text-wrap:balance;line-height:1.1}
 p{margin:0}
 a{color:inherit}
-.gutter{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.inner{max-width:1240px;margin:0 auto;position:relative}
-.eyebrow{font:500 .74rem/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--grey)}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-button,.btn{font:500 .92rem/1 var(--body);cursor:pointer;border:0;border-radius:999px;display:inline-flex;align-items:center;gap:10px;
-  padding:12px 18px;background:var(--coal-2);color:var(--white);text-decoration:none;
-  transition:transform 140ms var(--ease-out),background-color 200ms ease,color 200ms ease}
-button:active,.btn:active{transform:scale(.97)}
-button:disabled{opacity:.4;cursor:not-allowed}
-button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--lime);outline-offset:3px}
-.btn-lime{background:var(--lime);color:var(--lime-ink);font-weight:600}
-.btn-ghost{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
-.btn-rec{background:var(--vl);color:#fff}
-.btn-sm{padding:9px 14px;font-size:.84rem}
-.arrow{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--lime-ink);color:var(--lime);flex:none;margin:-6px -10px -6px 0;
-  transition:transform 200ms var(--ease-out)}
-.btn-ghost .arrow,.btn:not(.btn-lime) .arrow{background:var(--lime);color:var(--lime-ink)}
-.arrow svg{width:12px;height:12px}
-@media (hover:hover) and (pointer:fine){
-  .btn:hover .arrow,button:hover .arrow{transform:rotate(45deg)}
-  .btn-ghost:hover,button:not(.btn-lime):not(.btn-rec):not(:disabled):hover{background:#2a2a26}
-}
 
-/* Floating nav */
-.nav{position:fixed;z-index:1000;top:calc(env(safe-area-inset-top,0px) + 12px);left:0;right:0;pointer-events:none}
-.nav .inner{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.pill-group{pointer-events:auto;display:flex;align-items:center;gap:4px;padding:5px;border-radius:999px;background:rgba(18,18,17,.78);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
-.brand{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;font:600 .84rem var(--body);text-decoration:none}
-.brand img{width:28px;height:28px;border-radius:8px}
-.nav a.navlink{font:500 .82rem var(--body);padding:8px 12px;border-radius:999px;text-decoration:none;color:var(--white);transition:background-color 200ms ease}
-.nav a.navlink:hover{background:rgba(255,255,255,.08)}
-@media (max-width:520px){.nav a.navlink.hide-sm{display:none}}
+/* App window */
+.win{max-width:1440px;margin:0 auto;background:var(--paper);border-radius:var(--r-win);padding:12px;
+  display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);gap:12px;align-items:start;box-shadow:0 30px 80px -40px rgba(60,40,20,.45)}
+@media (max-width:960px){.win{grid-template-columns:minmax(0,1fr);padding:8px;border-radius:24px}}
 
-/* Hero */
-.hero{position:relative;overflow:hidden;padding-block:calc(env(safe-area-inset-top,0px) + 120px) 72px;isolation:isolate}
-#topo{position:absolute;inset:-60px;width:calc(100% + 120px);height:calc(100% + 120px);z-index:-1;opacity:.9;animation:drift 60s linear infinite alternate}
-@keyframes drift{to{transform:translate3d(-40px,24px,0)}}
-.hero h1{font-size:clamp(3rem,11vw,9.6rem);text-transform:uppercase;line-height:.9;margin-block:18px 26px}
-.hero h1 .ln{display:block;overflow:hidden;padding-bottom:.04em}
-.hero h1 .ln>span{display:block;animation:rise 900ms var(--ease-out) both}
-.hero h1 .ln:nth-child(2)>span{animation-delay:70ms;color:var(--lime)}
-@keyframes rise{from{transform:translateY(105%)}}
-.lede{font-size:clamp(1.25rem,2.6vw,2rem);line-height:1.25;font-weight:400;max-width:26ch;color:var(--white);animation:fade 900ms 160ms var(--ease-out) both}
-.lede .dim{color:var(--grey-2)}
-@keyframes fade{from{opacity:0;transform:translateY(12px)}}
-.cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px;animation:fade 900ms 240ms var(--ease-out) both}
-.hero-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin-top:56px;border-radius:var(--r-lg);overflow:hidden;background:var(--line);
-  animation:fade 900ms 320ms var(--ease-out) both}
-.hero-stats div{background:rgba(18,18,17,.92);padding:18px 18px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
-.hero-stats b{font:800 clamp(1.5rem,4vw,2.6rem)/1 var(--display);font-variant-numeric:tabular-nums}
-.hero-stats b.hot{color:var(--lime)}
-@media (max-width:700px){.hero-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Media card = map */
+.media{position:sticky;top:12px;height:calc(100vh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:520px;
+  border-radius:var(--r-card);overflow:hidden;background:var(--night);isolation:isolate}
+@media (max-width:960px){.media{position:relative;top:0;height:62vh;min-height:440px}}
+#map{position:absolute;inset:0;background:var(--night)}
+.leaflet-tile-pane{filter:invert(1) grayscale(1) brightness(.62) contrast(1.2) sepia(.15)}
+.leaflet-container{font-family:var(--sans)}
+.leaflet-control-attribution{background:rgba(14,16,19,.6)!important;color:#9a968e!important;border-radius:10px 0 0 0;font-size:10px}
+.leaflet-control-attribution a{color:#d8d3c8!important}
+.leaflet-bottom.leaflet-right{bottom:84px}
+.leaflet-control-zoom{border:0!important;box-shadow:none!important}
+.leaflet-control-zoom a{background:var(--pill-dark)!important;color:#fff!important;border:0!important;backdrop-filter:blur(10px);width:34px!important;height:34px!important;line-height:34px!important;border-radius:50%!important;margin-top:6px}
+.leaflet-popup-content-wrapper{border-radius:18px;box-shadow:0 12px 34px rgba(0,0,0,.28)}
+.leaflet-popup-content{font:400 .88rem/1.5 var(--sans);margin:14px 16px;color:var(--ink)}
+.leaflet-popup-content b{font:500 1.15rem/1.15 var(--serif);display:block;margin-bottom:4px}
+.over{color:var(--vl);font-weight:500}
+.ok{color:var(--q);font-weight:500}
 
-/* Lime marquee band = legend */
-.band-outer{overflow:hidden;padding-block:24px;margin-block:-24px;position:relative;z-index:2}
-.band-wrap{margin-inline:-6%;transform:rotate(-2deg);overflow:hidden}
-.band{background:var(--lime);color:var(--lime-ink);padding-block:14px;display:flex;width:max-content;animation:marquee 38s linear infinite}
-.band-wrap:hover .band{animation-play-state:paused}
-.band ul{display:flex;gap:36px;list-style:none;margin:0;padding:0 18px;font:800 clamp(1rem,2.2vw,1.4rem)/1 var(--display);text-transform:uppercase;white-space:nowrap}
-.band li{display:flex;align-items:center;gap:12px}
-.band li i{width:14px;height:14px;border-radius:50%;display:inline-block;box-shadow:inset 0 0 0 2px var(--lime-ink)}
-.band li small{font:500 .8rem var(--mono);opacity:.75}
-@keyframes marquee{to{transform:translateX(-50%)}}
-
-/* Sections + route line */
-section.blk{position:relative;padding-block:88px}
-.route{position:absolute;left:6px;top:0;bottom:0;width:2px;pointer-events:none}
-.route::before{content:"";position:absolute;inset:0;background:var(--line)}
-.route::after{content:"";position:absolute;inset:0;background:var(--lime);transform-origin:top;transform:scaleY(1)}
-@supports (animation-timeline:view()){
-  .route::after{transform:scaleY(0);animation:draw linear both;animation-timeline:view();animation-range:entry 10% cover 60%}
-}
-@keyframes draw{to{transform:scaleY(1)}}
-.stop{display:flex;align-items:flex-start;gap:16px;margin-bottom:34px;position:relative}
-.stop .num{font:600 .9rem var(--mono);color:var(--grey);padding-top:.5em;min-width:2ch}
-.stop h2{font-size:clamp(2rem,6vw,4.2rem);text-transform:uppercase;color:var(--lime)}
-.stop p{color:var(--grey);margin-top:12px;max-width:52ch}
-.stop .dot{position:absolute;left:-29px;top:.7em;width:12px;height:12px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 5px var(--black)}
-.blk .content{padding-left:28px}
-@media (max-width:700px){.blk .content{padding-left:22px}.stop .dot{left:-23px}}
-
-/* Reveal on scroll (progressive: fully visible without support) */
-@supports (animation-timeline:view()){
-  .reveal{animation:reveal linear both;animation-timeline:view();animation-range:entry 0% entry 35%}
-  @keyframes reveal{from{opacity:0;transform:translateY(40px) scale(.98)}}
-}
-
-/* Measure */
-.measure-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
-@media (max-width:940px){.measure-grid{grid-template-columns:minmax(0,1fr)}}
-.card{background:var(--coal);border-radius:var(--r-xl);padding:24px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);min-width:0}
-.meter-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;font:500 .78rem var(--body);background:var(--coal-2);color:var(--white)}
-.chip i{width:9px;height:9px;border-radius:50%;background:var(--grey);transition:background-color 120ms ease}
-.ringbox{position:relative;width:min(100%,380px);aspect-ratio:220/186;margin:18px auto 0;max-width:100%}
-.ringbox .readout{inset:0 0 9% 0}
-#ring{width:100%;height:100%;display:block;overflow:visible}
-#ring circle.d{fill:var(--line);transition:fill 120ms ease}
-#ring circle.lim{fill:none;stroke:var(--white);stroke-width:1.5}
-.readout{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
-.readout .num{font:800 clamp(4.2rem,15vw,6.4rem)/.9 var(--display);font-variant-numeric:tabular-nums;letter-spacing:-.04em}
-.readout .unit{font:500 .9rem var(--mono);color:var(--grey)}
-.readout .bandname{font:600 .8rem var(--body);text-transform:uppercase;letter-spacing:.14em}
-canvas#trace{width:100%;height:72px;display:block;margin-top:14px}
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
-.stat{background:var(--coal-2);border-radius:var(--r-md);padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
-.stat .v{font:500 1.15rem var(--mono);font-variant-numeric:tabular-nums}
-@media (max-width:420px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-.msg{font-size:.88rem;color:var(--grey);min-height:1.4em;margin-top:10px}
-.msg.err{color:var(--vl)}
-.msg.ok{color:var(--lime)}
-
-form{display:flex;flex-direction:column;gap:14px}
-.card h3{font-size:1.5rem;text-transform:uppercase}
-.field{display:flex;flex-direction:column;gap:7px;min-width:0}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media (max-width:420px){.two{grid-template-columns:1fr}}
-label.eyebrow{display:block}
-input,select,textarea{font:400 .95rem var(--body);color:var(--white);background:var(--coal-2);border:0;box-shadow:inset 0 0 0 1px var(--line);
-  border-radius:var(--r-md);padding:12px 14px;width:100%;transition:box-shadow 200ms ease}
-input:hover,select:hover,textarea:hover{box-shadow:inset 0 0 0 1px var(--grey-2)}
-input::placeholder,textarea::placeholder{color:var(--grey-2)}
-textarea{resize:vertical;min-height:72px}
-.loc{font:400 .82rem var(--mono);color:var(--grey);word-break:break-word}
-details.cal{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
-details.cal summary{cursor:pointer;font:500 .9rem var(--body);list-style:none;display:flex;justify-content:space-between;align-items:center}
-details.cal summary::-webkit-details-marker{display:none}
-details.cal summary::after{content:"+";font:400 1.3rem var(--mono);color:var(--lime);transition:transform 200ms var(--ease-out)}
-details.cal[open] summary::after{transform:rotate(45deg)}
-details.cal .body{display:flex;flex-direction:column;gap:14px;margin-top:14px}
-.note{font-size:.84rem;color:var(--grey);max-width:68ch}
-
-/* Map */
-.ghost{position:absolute;left:0;right:0;top:40px;overflow:hidden;pointer-events:none;z-index:0}
-.ghost .track{display:flex;width:max-content;animation:marquee 60s linear infinite}
-.ghost span{font:800 clamp(5rem,18vw,13rem)/1 var(--display);text-transform:uppercase;white-space:nowrap;color:var(--ghost);padding-right:.4em}
-.blk .content{position:relative;z-index:1}
-.mapcard{position:relative;border-radius:var(--r-xl);overflow:hidden;background:var(--coal);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
-#map{height:min(68vh,620px);min-height:420px;background:#151513}
-.leaflet-tile-pane{filter:invert(1) grayscale(1) brightness(.78) contrast(1.15)}
-.leaflet-container{font-family:var(--body)}
-.leaflet-control-zoom a{background:var(--coal)!important;color:var(--white)!important;border-color:var(--line)!important}
-.leaflet-control-attribution{background:rgba(0,0,0,.6)!important;color:var(--grey)!important}
-.leaflet-control-attribution a{color:var(--white)!important}
-.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--coal);color:var(--white);box-shadow:0 10px 30px rgba(0,0,0,.5)}
-.leaflet-popup-content-wrapper{border-radius:var(--r-lg)}
-.leaflet-popup-content{font:300 .9rem/1.5 var(--body);margin:16px 18px}
-.leaflet-popup-content b{font:800 1.05rem/1.15 var(--display);text-transform:uppercase;display:block;margin-bottom:6px}
-.leaflet-container a.leaflet-popup-close-button{color:var(--grey)}
-.filters{position:absolute;z-index:500;top:12px;left:12px;right:12px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.ov{position:absolute;z-index:500;display:flex;gap:6px;align-items:center}
+.ov-tl{top:12px;left:12px;right:60px;flex-wrap:wrap}
+.ov-tr{top:12px;right:12px}
+.dpill{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:999px;background:var(--pill-dark);color:#fff;
+  font:500 .8rem var(--sans);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:0}
+.dpill svg{width:14px;height:14px;opacity:.9}
+.dpill .live{width:7px;height:7px;border-radius:50%;background:#ff5a4e;box-shadow:0 0 0 0 rgba(255,90,78,.6);animation:pulse 1.6s ease-out infinite}
+@keyframes pulse{to{box-shadow:0 0 0 8px rgba(255,90,78,0)}}
+.icon-btn{width:34px;height:34px;padding:0;justify-content:center;cursor:pointer}
+.filters{position:absolute;z-index:500;left:12px;right:12px;top:52px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
 .filters::-webkit-scrollbar{display:none}
-.fchip{flex:none;font:500 .8rem var(--body);padding:8px 13px;border-radius:999px;background:rgba(18,18,17,.82);color:var(--white);
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
-.fchip[aria-pressed="true"]{background:var(--lime);color:var(--lime-ink);box-shadow:none}
-.fchip[aria-pressed="false"]{color:var(--grey)}
-.popup-over{color:var(--vl);font-weight:500}
-.popup-ok{color:var(--q)}
-.tag{font:500 .66rem var(--body);text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;border-radius:999px;background:var(--sand);color:var(--ink);vertical-align:2px}
+.fchip{flex:none;cursor:pointer;height:30px;padding:0 12px;border-radius:999px;border:0;font:500 .76rem var(--sans);
+  background:var(--pill-dark);color:#cfcac0;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:background-color 180ms ease,color 180ms ease}
+.fchip[aria-pressed="true"]{background:rgba(255,255,255,.92);color:var(--ink)}
 
-/* Cream results band */
-.cream{background:var(--cream);color:var(--ink);border-radius:var(--r-xl) var(--r-xl) 0 0;margin-top:-28px;position:relative;z-index:3}
-.cream .ghost span{color:var(--cream-2)}
-.cream .route::before{background:var(--cream-2)}
-.cream .route::after{background:var(--ink)}
-.cream .stop .num{color:var(--grey-2)}
-.cream .stop h2{color:var(--ink)}
-.cream .stop p{color:var(--grey-2)}
-.cream .stop .dot{background:var(--ink);box-shadow:0 0 0 5px var(--cream)}
-.notice{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;background:var(--sand);color:var(--ink);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:22px;font-size:.92rem}
-.notice button{background:var(--ink);color:var(--cream)}
-.sources{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(260px,320px);gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:12px;margin-inline:-4px;padding-inline:4px}
-.scard{scroll-snap-align:start;border-radius:var(--r-xl);overflow:hidden;background:var(--white);display:flex;flex-direction:column;min-height:300px;
-  box-shadow:0 1px 0 rgba(0,0,0,.04);transition:transform 250ms var(--ease-out)}
-@media (hover:hover) and (pointer:fine){.scard:hover{transform:translateY(-4px)}}
-.scard .top{padding:18px 18px 0;display:flex;justify-content:space-between;gap:8px;align-items:center}
-.scard .datepill{font:500 .74rem var(--body);background:var(--lime);color:var(--lime-ink);padding:5px 10px;border-radius:999px}
-.scard .cat{font:500 .74rem var(--body);color:var(--grey-2)}
-.scard .big{padding:22px 18px 8px;font:800 4rem/.9 var(--display);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
-.scard .big small{font:500 .85rem var(--mono);letter-spacing:0;color:var(--grey-2);margin-left:4px}
-.scard .meta{padding:0 18px 16px;font:400 .82rem var(--mono);color:var(--grey-2)}
-.scard .foot{margin-top:auto;padding:18px;color:var(--ink)}
-.scard .foot h4{margin:0;font:800 1.15rem/1.05 var(--display);text-transform:uppercase;overflow-wrap:anywhere}
-.scard .foot span{display:block;margin-top:6px;font:500 .8rem var(--body)}
-.empty{color:var(--grey-2);padding:16px 0}
-.tbl-head{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;margin:54px 0 14px}
-.tbl-head h3{font-size:1.5rem;text-transform:uppercase}
-.tbl-actions{display:flex;flex-wrap:wrap;gap:8px}
-.cream .btn,.cream button{background:var(--ink);color:var(--cream)}
-.cream .btn .arrow{background:var(--lime);color:var(--lime-ink)}
-.tablewrap{overflow-x:auto;background:var(--white);border-radius:var(--r-xl);padding:6px 10px}
-table{width:100%;border-collapse:collapse;font-size:.9rem}
-th,td{text-align:left;padding:13px 10px;border-bottom:1px solid var(--cream-2);white-space:nowrap}
+/* Player bar */
+.player{position:absolute;z-index:500;left:12px;right:12px;bottom:12px;padding:12px 14px;border-radius:18px;
+  background:linear-gradient(to top,rgba(14,16,19,.86),rgba(14,16,19,.62));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#fff}
+.player .row1{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:.82rem}
+.player .row1 .t{font:400 .95rem var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.player .row1 a{color:#cfcac0;text-decoration:none;white-space:nowrap;flex:none}
+.player .row2{display:flex;align-items:center;gap:12px;margin-top:10px}
+.pbtn{width:32px;height:32px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;display:grid;place-items:center;cursor:pointer;flex:none;
+  transition:background-color 180ms ease,transform 140ms var(--ease-out)}
+.pbtn:active{transform:scale(.94)}
+.pbtn:disabled{opacity:.35;cursor:not-allowed}
+.pbtn svg{width:14px;height:14px}
+.pbtn.rec{background:#ff5a4e}
+.track{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.22);position:relative;overflow:hidden}
+.track i{position:absolute;inset:0;background:#fff;transform-origin:left;transform:scaleX(0);transition:transform 125ms linear}
+.player .time{font:400 .74rem var(--mono);color:#cfcac0;flex:none;font-variant-numeric:tabular-nums}
+
+/* Right pane */
+.pane{display:flex;flex-direction:column;gap:12px;min-width:0;padding:4px 4px 8px}
+.topbar{display:flex;align-items:center;gap:8px}
+.search{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:42px;padding:0 14px;border-radius:999px;background:var(--card)}
+.search svg{width:16px;height:16px;color:var(--faint);flex:none}
+.search input{border:0;outline:0;background:transparent;font:400 .92rem var(--sans);color:var(--ink);width:100%;min-width:0}
+.search:focus-within{box-shadow:0 0 0 2px var(--ink)}
+.round{width:42px;height:42px;border-radius:50%;background:var(--card);display:grid;place-items:center;flex:none;border:0;cursor:pointer;color:var(--ink)}
+.round svg{width:17px;height:17px}
+.brandpill{display:flex;align-items:center;gap:8px;height:42px;padding:0 14px 0 5px;border-radius:999px;background:var(--card);font:500 .84rem var(--sans);flex:none;text-decoration:none}
+.brandpill img{width:32px;height:32px;border-radius:50%}
+@media (max-width:480px){.brandpill span{display:none}.brandpill{padding:0 5px}}
+
+.crumbs{font-size:.8rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.crumbs b{font-weight:400;color:var(--ink)}
+.title h1{font-size:clamp(2.2rem,4.6vw,3.4rem);margin-top:6px;line-height:1.02}
+.title p{color:var(--muted);margin-top:10px;max-width:56ch}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;background:var(--card);font:400 .8rem var(--sans);color:var(--ink);border:0}
+.pill svg{width:13px;height:13px}
+.pill .star{color:var(--accent)}
+.pill.mono b{font-weight:500}
+
+.h2row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:22px}
+.h2row h2{font-size:1.65rem}
+.h2row .link{background:none;border:0;padding:0;font:500 .82rem var(--sans);color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+/* Gradient live card */
+.live-card{position:relative;border-radius:var(--r-card);overflow:hidden;color:#fff;padding:18px;min-height:280px;display:flex;flex-direction:column;isolation:isolate}
+.live-card .bg{position:absolute;inset:0;z-index:-1;opacity:0;transition:opacity 240ms ease}
+.live-card .bg.on{opacity:1}
+.bg-idle{background:radial-gradient(130% 110% at 88% 0%,#cdb79c 0%,#8f7760 46%,#3f3428 100%)}
+.bg-q{background:radial-gradient(130% 110% at 88% 0%,#8fd3a8 0%,#2f8a5d 46%,#123a2a 100%)}
+.bg-m{background:radial-gradient(130% 110% at 88% 0%,#f4d27a 0%,#c98f22 46%,#5a3708 100%)}
+.bg-l{background:radial-gradient(130% 110% at 88% 0%,#f6b06e 0%,#e0602e 46%,#7a2412 100%)}
+.bg-vl{background:radial-gradient(130% 110% at 88% 0%,#f48a7e 0%,#c62f2c 46%,#5c0f12 100%)}
+.bg-x{background:radial-gradient(130% 110% at 88% 0%,#cfa2f4 0%,#7b37b8 46%,#2b0f4a 100%)}
+.grain{position:absolute;inset:0;z-index:-1;opacity:.22;pointer-events:none;mix-blend-mode:soft-light;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.tpills{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tpill{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:999px;background:rgba(255,255,255,.18);font:500 .75rem var(--sans);color:#fff;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.tpills .spacer{flex:1}
+.readout{display:flex;align-items:flex-end;gap:10px;margin-top:auto;padding-top:22px}
+.readout .num{font:400 clamp(4.6rem,12vw,6.6rem)/.82 var(--serif);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.readout .side{display:flex;flex-direction:column;gap:4px;padding-bottom:6px}
+.readout .unit{font:400 .82rem var(--mono);opacity:.8}
+.readout .bandname{font:400 1.25rem var(--serif)}
+canvas#trace{width:100%;height:56px;display:block;margin-top:14px}
+.lstats{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.lstats .tpill b{font:500 .78rem var(--mono);font-variant-numeric:tabular-nums}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;align-items:center}
+.wbtn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:999px;border:0;cursor:pointer;font:500 .86rem var(--sans);
+  background:#fff;color:var(--ink);transition:transform 140ms var(--ease-out),background-color 180ms ease,opacity 180ms ease}
+.wbtn:active{transform:scale(.97)}
+.wbtn:disabled{opacity:.45;cursor:not-allowed}
+.wbtn.glass{background:rgba(255,255,255,.18);color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.wbtn.rec{background:#fff;color:var(--vl)}
+.wbtn .dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.live-card .msg{color:rgba(255,255,255,.86);margin-top:10px;font-size:.84rem;min-height:1.3em}
+
+/* White cards */
+.card{background:var(--card);border-radius:var(--r-card);padding:18px;min-width:0}
+.card h3{font-size:1.45rem}
+.card .sub{color:var(--muted);font-size:.86rem;margin-top:4px}
+form{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:440px){.two{grid-template-columns:1fr}}
+.lbl{font:500 .74rem var(--sans);color:var(--muted)}
+input,select,textarea{font:400 .92rem var(--sans);color:var(--ink);background:var(--paper);border:1px solid transparent;border-radius:var(--r-md);padding:11px 13px;width:100%;
+  transition:border-color 180ms ease,background-color 180ms ease}
+input:hover,select:hover,textarea:hover{border-color:var(--line)}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ink);background:#fff}
+textarea{resize:vertical;min-height:64px}
+.loc{font:400 .78rem var(--mono);color:var(--muted);word-break:break-word}
+.dbtn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:999px;border:0;cursor:pointer;font:500 .86rem var(--sans);
+  background:var(--ink);color:#fff;text-decoration:none;transition:transform 140ms var(--ease-out),opacity 180ms ease}
+.dbtn:active{transform:scale(.97)}
+.dbtn.light{background:var(--paper);color:var(--ink)}
+.dbtn.sm{height:34px;padding:0 13px;font-size:.8rem}
+.msg{font-size:.84rem;color:var(--muted);min-height:1.3em}
+.msg.err{color:var(--vl)}
+.msg.good{color:var(--q)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Lesson-style list */
+.list{display:flex;flex-direction:column;gap:6px}
+.item{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:14px;align-items:center;padding:8px;border-radius:18px;cursor:pointer;
+  transition:background-color 180ms ease}
+@media (hover:hover) and (pointer:fine){.item:hover{background:rgba(255,255,255,.7)}}
+.thumb{width:72px;height:58px;border-radius:14px;position:relative;overflow:hidden;display:grid;place-items:center;color:#fff}
+.thumb b{font:400 1.35rem/1 var(--serif);font-variant-numeric:tabular-nums;position:relative}
+.thumb::after{content:"";position:absolute;inset:0;background:radial-gradient(80% 80% at 80% 10%,rgba(255,255,255,.35),transparent 60%)}
+.item h4{font-size:1.08rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item p{font-size:.8rem;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .end{display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:999px;background:var(--card);font:400 .74rem var(--mono);white-space:nowrap}
+.item .end.over{color:var(--vl);font-weight:500}
+.tag{font:500 .64rem var(--sans);text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:999px;background:var(--paper);color:var(--muted);vertical-align:2px}
+.empty{color:var(--muted);font-size:.9rem;padding:8px}
+
+/* Feature card (loudest source) */
+.feature{position:relative;border-radius:var(--r-card);overflow:hidden;color:#fff;padding:18px;isolation:isolate;min-height:200px;display:flex;flex-direction:column}
+.feature .bgf{position:absolute;inset:0;z-index:-1}
+.feature h3{font-size:clamp(1.6rem,3.4vw,2.1rem);margin-top:auto;padding-top:36px}
+.feature p{opacity:.86;font-size:.88rem;margin-top:6px}
+.feature .wpill{background:#fff;color:var(--ink);height:28px;padding:0 12px;border-radius:999px;display:inline-flex;align-items:center;font:500 .76rem var(--sans)}
+
+/* Notice */
+.notice{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;background:#e6dccd;border-radius:18px;padding:12px 14px;font-size:.86rem}
+
+/* Table */
+.tablewrap{overflow-x:auto;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{text-align:left;padding:11px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
 tr:last-child td{border-bottom:0}
-th{font:500 .7rem var(--body);text-transform:uppercase;letter-spacing:.12em;color:var(--grey-2)}
+th{font:500 .7rem var(--sans);color:var(--muted)}
 td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
-tbody tr{cursor:pointer;transition:background-color 150ms ease}
-@media (hover:hover){tbody tr:hover{background:var(--cream)}}
-td .lvl{display:inline-flex;align-items:center;gap:8px}
-td .lvl i{width:10px;height:10px;border-radius:50%}
-.over{color:#c62f2f;font-weight:500}
-td button{padding:7px 12px;font-size:.78rem}
-.cream .msg{color:var(--grey-2)}
+td .lv{display:inline-flex;gap:7px;align-items:center}
+td .lv i{width:8px;height:8px;border-radius:50%}
+td.over{color:var(--vl)}
+tbody tr{cursor:pointer}
+@media (hover:hover){tbody tr:hover{background:var(--paper)}}
+.tbl-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 
-footer{background:var(--cream);color:var(--ink)}
-footer .fwrap{background:var(--black);color:var(--white);border-radius:var(--r-xl) var(--r-xl) 0 0;padding-block:56px calc(40px + env(safe-area-inset-bottom,0px))}
-footer .big{font:800 clamp(2.6rem,10vw,7rem)/.9 var(--display);text-transform:uppercase;color:var(--lime)}
-footer .cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:40px}
-@media (max-width:760px){footer .cols{grid-template-columns:minmax(0,1fr)}}
-footer .cols p{color:var(--grey);font-size:.9rem}
-footer .cols h4{margin:0 0 8px;font:600 .74rem var(--body);letter-spacing:.14em;text-transform:uppercase}
+details.cal summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px}
+details.cal summary::-webkit-details-marker{display:none}
+details.cal summary .chev{width:30px;height:30px;border-radius:50%;background:var(--paper);display:grid;place-items:center;transition:transform 200ms var(--ease-out);flex:none}
+details.cal[open] summary .chev{transform:rotate(180deg)}
+details.cal .body{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.note{font-size:.8rem;color:var(--muted)}
 
+.about{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:600px){.about{grid-template-columns:minmax(0,1fr)}}
+.about .card h4{font-size:1.1rem}
+.about .card p{font-size:.84rem;color:var(--muted);margin-top:6px}
+
+/* Load-in: once, staggered */
+.rise{animation:rise 520ms var(--ease-out) both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+.pane>.rise:nth-child(2){animation-delay:40ms}.pane>.rise:nth-child(3){animation-delay:80ms}
+.pane>.rise:nth-child(4){animation-delay:120ms}.pane>.rise:nth-child(5){animation-delay:160ms}
 @media (prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}
-  #topo,.band,.ghost .track{animation:none}
-  .hero h1 .ln>span,.lede,.cta,.hero-stats{animation:fade 300ms ease both}
-  @keyframes fade{from{opacity:0}}
-  .reveal{animation:none}
-  .route::after{animation:none;transform:scaleY(1)}
-  .scard,.arrow{transition:none}
+  .rise{animation:fadein 200ms ease both}@keyframes fadein{from{opacity:0}}
+  .dpill .live{animation:none}
+  .track i,.live-card .bg{transition:none}
 }
 </style>
 </head>
 <body>
 
-<nav class="nav gutter" aria-label="Main">
-  <div class="inner">
-    <div class="pill-group">
-      <a class="brand" href="#top"><img src="icons/icon-192.png" alt="">Noise Map</a>
+<div class="win">
+  <!-- Map as media card -->
+  <section class="media" id="map-sec" aria-label="Noise map">
+    <div id="map"></div>
+    <div class="ov ov-tl">
+      <span class="dpill" id="livePill" hidden><span class="live"></span>Live</span>
+      <span class="dpill"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s5-4.2 5-8A5 5 0 0 0 3 6c0 3.8 5 8 5 8Z"/><circle cx="8" cy="6" r="1.8"/></svg><span id="pinCount">0</span></span>
     </div>
-    <div class="pill-group">
-      <a class="navlink" href="#measure">Measure</a>
-      <a class="navlink" href="#map-sec">Map</a>
-      <a class="navlink hide-sm" href="#results">Results</a>
-      <button type="button" id="btnInstall" class="btn-lime btn-sm" hidden>Install</button>
+    <div class="ov ov-tr">
+      <button class="dpill icon-btn" id="btnLocate" type="button" aria-label="Centre map on me"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 1v2.5M8 12.5V15M1 8h2.5M12.5 8H15"/></svg></button>
     </div>
-  </div>
-</nav>
-
-<header class="hero gutter" id="top">
-  <canvas id="topo" aria-hidden="true"></canvas>
-  <div class="inner">
-    <div class="eyebrow">Community sound survey · Ghana EPA limits</div>
-    <h1><span class="ln"><span>Map the</span></span><span class="ln"><span>Noise</span></span></h1>
-    <p class="lede">Measure sound with your phone, pin it to the street it came from, <span class="dim">and see which churches, speakers and roads break the limit.</span></p>
-    <div class="cta">
-      <a class="btn btn-lime" href="#measure">Start measuring <span class="arrow"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a>
-      <a class="btn btn-ghost" href="#map-sec">See the map <span class="arrow"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9 9 3M4 3h5v5"/></svg></span></a>
-    </div>
-    <div class="hero-stats" id="heroStats" aria-live="polite">
-      <div><span class="eyebrow">Readings</span><b id="hsReadings">0</b></div>
-      <div><span class="eyebrow">Sources</span><b id="hsSources">0</b></div>
-      <div><span class="eyebrow">Over limit</span><b id="hsOver" class="hot">0%</b></div>
-      <div><span class="eyebrow">Loudest Leq</span><b id="hsMax">--</b></div>
-    </div>
-  </div>
-</header>
-
-<div class="band-outer"><div class="band-wrap" aria-label="Loudness bands in dB(A)">
-  <div class="band" aria-hidden="true"></div>
-</div></div>
-
-<main>
-  <!-- 01 Measure + 02 Tag -->
-  <section class="blk gutter" id="measure">
-    <div class="inner">
-      <div class="route" aria-hidden="true"></div>
-      <div class="content">
-        <div class="stop">
-          <i class="dot" aria-hidden="true"></i><span class="num">01</span>
-          <div>
-            <h2>Measure</h2>
-            <p>Stand where residents live, not under the speaker. Record 30 to 60 seconds and let the meter build an average.</p>
-          </div>
-        </div>
-
-        <div class="measure-grid">
-          <div class="card reveal" aria-label="Sound meter">
-            <div class="meter-top">
-              <span class="eyebrow">Live level · <span id="wLabel">A-weighted</span></span>
-              <span class="chip"><i id="bandDot"></i><span id="limitNow">Limit now 55 dB</span></span>
-            </div>
-            <div class="ringbox">
-              <svg id="ring" viewBox="-110 -110 220 186" aria-hidden="true"></svg>
-              <div class="readout">
-                <span class="bandname" id="band">Idle</span>
-                <span class="num" id="live">--</span>
-                <span class="unit" id="liveUnit">dB(A)</span>
-              </div>
-            </div>
-            <canvas id="trace" aria-hidden="true"></canvas>
-            <div class="stats">
-              <div class="stat"><span class="eyebrow">Leq</span><span class="v" id="sLeq">--</span></div>
-              <div class="stat"><span class="eyebrow">Max</span><span class="v" id="sMax">--</span></div>
-              <div class="stat"><span class="eyebrow">L90</span><span class="v" id="sL90">--</span></div>
-              <div class="stat"><span class="eyebrow">Time</span><span class="v" id="sDur">0:00</span></div>
-            </div>
-            <div class="controls">
-              <button class="btn-lime" id="btnMic" type="button">Start microphone</button>
-              <button id="btnRec" type="button" disabled>Record</button>
-              <button id="btnReset" type="button" class="btn-ghost" disabled>Reset</button>
-            </div>
-            <div class="msg" id="micMsg"></div>
-
-            <details class="cal">
-              <summary>Calibration &amp; limits</summary>
-              <div class="body">
-                <div class="field">
-                  <label class="eyebrow" for="offset">Calibration offset (dB)</label>
-                  <input id="offset" type="number" step="0.5" value="100">
-                  <span class="note">Phone microphones aren't calibrated. Hold the phone beside a real sound level meter and adjust this until both match. Use the same offset on every phone in the survey.</span>
-                </div>
-                <div class="two">
-                  <div class="field">
-                    <label class="eyebrow" for="weighting">Weighting</label>
-                    <select id="weighting"><option value="A">A (human hearing)</option><option value="Z">Z (flat)</option></select>
-                  </div>
-                  <div class="field">
-                    <label class="eyebrow" for="zone">Compare against</label>
-                    <select id="zone">
-                      <option value="res">Residential 55 / 48</option>
-                      <option value="edu">Health &amp; schools 55 / 50</option>
-                      <option value="mix">Mixed use 60 / 55</option>
-                      <option value="com">Commercial 75 / 65</option>
-                    </select>
-                  </div>
-                </div>
-                <span class="note">Ghana EPA ambient limits in dB(A), day (6am–10pm) / night.</span>
-              </div>
-            </details>
-          </div>
-
-          <div class="card reveal">
-            <div class="stop" style="margin-bottom:22px">
-              <span class="num">02</span>
-              <div><h3>Tag it</h3><p style="margin-top:8px">Name the source and pin where you stood.</p></div>
-            </div>
-            <form id="form" autocomplete="off">
-              <div class="field">
-                <label class="eyebrow" for="place">Source name</label>
-                <input id="place" required placeholder="e.g. church on 5th Lane, Sunday service">
-              </div>
-              <div class="two">
-                <div class="field">
-                  <label class="eyebrow" for="category">Source type</label>
-                  <select id="category">
-                    <option>Church</option><option>Mosque</option><option>Event / party</option>
-                    <option>Bar / club</option><option>Traffic</option><option>Market / trader</option>
-                    <option>Generator / industry</option><option>Other</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label class="eyebrow" for="distance">Distance to source (m)</label>
-                  <input id="distance" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 20">
-                </div>
-              </div>
-              <div class="field">
-                <span class="eyebrow">Location</span>
-                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-                  <button type="button" id="btnGps" class="btn-sm">Use my GPS</button>
-                  <span class="loc" id="locText">Not set. Use GPS or tap the map.</span>
-                </div>
-              </div>
-              <div class="field">
-                <label class="eyebrow" for="notes">Notes</label>
-                <textarea id="notes" placeholder="Speakers outside, windows open, time of service…"></textarea>
-              </div>
-              <button class="btn-lime" id="btnSave" type="submit" style="align-self:flex-start">Save reading <span class="arrow"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9 9 3M4 3h5v5"/></svg></span></button>
-              <div class="msg" id="saveMsg"></div>
-            </form>
-          </div>
-        </div>
+    <div class="filters" id="filters" role="group" aria-label="Show on map"></div>
+    <div class="player" aria-label="Recording">
+      <div class="row1"><span class="t" id="pTitle">Not recording</span><a href="#tag" id="pNext">Tag reading →</a></div>
+      <div class="row2">
+        <button class="pbtn" id="pRec" type="button" aria-label="Record" disabled><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="currentColor"/></svg></button>
+        <span class="time" id="pTime">0:00</span>
+        <div class="track" aria-hidden="true"><i id="pTrack"></i></div>
+        <span class="time">1:00</span>
       </div>
     </div>
   </section>
 
-  <!-- 03 Map -->
-  <section class="blk gutter" id="map-sec" style="padding-bottom:120px">
-    <div class="ghost" aria-hidden="true"><div class="track"><span>Noise map · </span><span>Noise map · </span><span>Noise map · </span><span>Noise map · </span></div></div>
-    <div class="inner">
-      <div class="route" aria-hidden="true"></div>
-      <div class="content">
-        <div class="stop" style="margin-top:110px">
-          <i class="dot" aria-hidden="true"></i><span class="num">03</span>
-          <div>
-            <h2>Map</h2>
-            <p>Every saved reading lands here, sized and coloured by its average level. Tap a point to see whether it broke the limit.</p>
-          </div>
-        </div>
-        <div class="mapcard reveal">
-          <div class="filters" id="filters" role="group" aria-label="Filter by source type"></div>
-          <div id="map" aria-label="Noise map"></div>
-        </div>
+  <!-- Project page -->
+  <main class="pane">
+    <div class="topbar rise">
+      <a class="brandpill" href="#top" id="top"><img src="icons/icon-192.png" alt=""><span>Noise Map</span></a>
+      <label class="search" for="q"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.6"/><path d="m10.5 10.5 3.5 3.5"/></svg>
+        <input id="q" type="search" placeholder="Search readings" autocomplete="off" aria-label="Search readings"></label>
+      <button class="round" id="btnInstall" type="button" aria-label="Install app" hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2v8m0 0 3-3m-3 3L5 7M3 13h10"/></svg></button>
+    </div>
+
+    <div class="title rise">
+      <nav class="crumbs" aria-label="Breadcrumb"><span>Citizen science</span><span>/</span><span>Environment</span><span>/</span><b>Noise survey</b></nav>
+      <h1>Community Noise Survey</h1>
+      <p>Measure sound with your phone, pin it to where you stood, and help map which churches, speakers and roads break Ghana's noise limits.</p>
+      <div class="pills">
+        <span class="pill"><b id="cReadings">0</b>&nbsp;readings</span>
+        <span class="pill"><b id="cSources">0</b>&nbsp;sources</span>
+        <span class="pill"><svg class="star" viewBox="0 0 16 16"><path fill="currentColor" d="M8 1.5 10 6l4.8.4-3.6 3.2 1.1 4.8L8 12 3.7 14.4l1.1-4.8L1.2 6.4 6 6Z"/></svg><b id="cOver">0%</b>&nbsp;over limit</span>
+        <span class="pill">Ghana EPA limits</span>
       </div>
     </div>
-  </section>
 
-  <!-- 04 Compare -->
-  <section class="blk gutter cream" id="results">
-    <div class="ghost" aria-hidden="true"><div class="track" style="animation-direction:reverse"><span>By source · </span><span>By source · </span><span>By source · </span><span>By source · </span></div></div>
-    <div class="inner">
-      <div class="route" aria-hidden="true"></div>
-      <div class="content">
-        <div class="stop" style="margin-top:110px">
-          <i class="dot" aria-hidden="true"></i><span class="num">04</span>
-          <div>
-            <h2>Compare</h2>
-            <p>Sources ranked loudest first, by energy-averaged Leq across every visit. <span id="sumCount"></span></p>
+    <!-- Live meter -->
+    <section class="live-card rise" aria-label="Sound meter">
+      <div class="bg bg-idle on" data-b="idle"></div><div class="bg bg-q" data-b="--q"></div><div class="bg bg-m" data-b="--m"></div>
+      <div class="bg bg-l" data-b="--l"></div><div class="bg bg-vl" data-b="--vl"></div><div class="bg bg-x" data-b="--x"></div>
+      <div class="grain"></div>
+      <div class="tpills">
+        <span class="tpill">Step 1 · Measure</span>
+        <span class="tpill" id="wLabel">A-weighted</span>
+        <span class="spacer"></span>
+        <span class="tpill" id="limitNow">Limit 55 dB · day</span>
+      </div>
+      <div class="readout">
+        <span class="num" id="live">—</span>
+        <span class="side"><span class="bandname" id="band">Ready</span><span class="unit" id="liveUnit">dB(A)</span></span>
+      </div>
+      <canvas id="trace" aria-hidden="true"></canvas>
+      <div class="lstats">
+        <span class="tpill">Leq <b id="sLeq">--</b></span>
+        <span class="tpill">Max <b id="sMax">--</b></span>
+        <span class="tpill">L90 <b id="sL90">--</b></span>
+        <span class="tpill">Time <b id="sDur">0:00</b></span>
+      </div>
+      <div class="controls">
+        <button class="wbtn" id="btnMic" type="button">Start microphone</button>
+        <button class="wbtn glass" id="btnRec" type="button" disabled><span class="dot"></span>Record</button>
+        <button class="wbtn glass" id="btnReset" type="button" disabled>Reset</button>
+      </div>
+      <div class="msg" id="micMsg">Stand where residents live, not under the speaker. Record 30–60 seconds.</div>
+    </section>
+
+    <!-- Tag -->
+    <section class="card rise" id="tag" aria-label="Tag this reading">
+      <h3>Tag this reading</h3>
+      <p class="sub">Step 2 · Name the source and pin where you stood. Tap the map to place the pin.</p>
+      <form id="form" autocomplete="off">
+        <div class="field">
+          <label class="lbl" for="place">Source name</label>
+          <input id="place" required placeholder="e.g. church on 5th Lane, Sunday service">
+        </div>
+        <div class="two">
+          <div class="field">
+            <label class="lbl" for="category">Source type</label>
+            <select id="category">
+              <option>Church</option><option>Mosque</option><option>Event / party</option>
+              <option>Bar / club</option><option>Traffic</option><option>Market / trader</option>
+              <option>Generator / industry</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="lbl" for="distance">Distance to source (m)</label>
+            <input id="distance" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 20">
           </div>
         </div>
-
-        <div class="notice" id="exampleNotice" hidden>
-          <span>These are example readings so you can see how it works. They disappear when you save your first real reading.</span>
-          <button class="btn-sm" id="btnHideEx" type="button">Hide examples</button>
-        </div>
-
-        <div class="sources" id="sources"></div>
-
-        <div class="tbl-head">
-          <h3>All readings</h3>
-          <div class="tbl-actions">
-            <button class="btn-sm" id="btnCsv" type="button">Export CSV</button>
-            <button class="btn-sm" id="btnGeo" type="button">Export GeoJSON</button>
-            <label class="btn btn-sm" for="importFile">Import <span class="arrow"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9 9 3M4 3h5v5"/></svg></span></label>
-            <input id="importFile" type="file" accept=".csv,.json,.geojson" hidden>
+        <div class="field">
+          <span class="lbl">Location</span>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+            <button type="button" id="btnGps" class="dbtn light sm">Use my GPS</button>
+            <span class="loc" id="locText">Not set. Use GPS or tap the map.</span>
           </div>
         </div>
-        <div class="tablewrap"><table id="readTable"><thead><tr>
-          <th>When</th><th>Source</th><th class="num">Leq</th><th class="num">Max</th><th class="num">Limit</th><th class="num">Dist</th><th></th>
-        </tr></thead><tbody></tbody></table></div>
-        <div class="msg" id="ioMsg"></div>
-      </div>
-    </div>
-  </section>
-</main>
+        <div class="field">
+          <label class="lbl" for="notes">Notes</label>
+          <textarea id="notes" placeholder="Speakers outside, windows open, time of service…"></textarea>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+          <button class="dbtn" id="btnSave" type="submit">Save reading</button>
+          <span class="msg" id="saveMsg"></span>
+        </div>
+      </form>
+    </section>
 
-<footer>
-  <div class="fwrap gutter">
-    <div class="inner">
-      <div class="big">Quieter<br>streets</div>
-      <div class="cols">
-        <div><h4>Your data</h4><p>Readings stay on this phone until you export them. Export a CSV after each session, then one person imports everyone's files to build a combined map. Duplicates are skipped.</p></div>
-        <div><h4>Accuracy</h4><p>Phone readings are indicative. Calibrate against a real meter, and follow up hotspots with certified measurements before taking action.</p></div>
-        <div><h4>Credits</h4><p>Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors. Built with <a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a>. Limits from Ghana EPA ambient noise standards.</p></div>
-      </div>
+    <div class="notice" id="exampleNotice" hidden>
+      <span>You're seeing example readings. They disappear when you save your first real one.</span>
+      <button class="dbtn sm" id="btnHideEx" type="button">Hide examples</button>
     </div>
-  </div>
-</footer>
+
+    <!-- Recent readings -->
+    <div class="h2row"><h2>Recent readings</h2><button class="link" id="btnAll" type="button">See all</button></div>
+    <div class="list" id="recent"></div>
+
+    <!-- Loudest sources -->
+    <div class="h2row"><h2>Loudest sources</h2><span class="note" id="sumCount"></span></div>
+    <div id="feature"></div>
+    <div class="list" id="sources"></div>
+
+    <!-- All readings -->
+    <section class="card" id="all" aria-label="All readings">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
+        <h3>All readings</h3><span class="note">Tap a row to find it on the map</span>
+      </div>
+      <div class="tablewrap"><table id="readTable"><thead><tr>
+        <th>When</th><th>Source</th><th class="num">Leq</th><th class="num">Max</th><th class="num">Limit</th><th class="num">Dist</th><th></th>
+      </tr></thead><tbody></tbody></table></div>
+      <div class="tbl-actions">
+        <button class="dbtn sm" id="btnCsv" type="button">Export CSV</button>
+        <button class="dbtn sm light" id="btnGeo" type="button">Export GeoJSON</button>
+        <label class="dbtn sm light" for="importFile">Import files</label>
+        <input id="importFile" type="file" accept=".csv,.json,.geojson" hidden>
+      </div>
+      <div class="msg" id="ioMsg"></div>
+    </section>
+
+    <!-- Calibration -->
+    <details class="card cal">
+      <summary><span><h3>Calibration &amp; limits</h3><span class="sub" style="display:block">Do this once per phone before your first survey.</span></span>
+        <span class="chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m3 4.5 3 3 3-3"/></svg></span></summary>
+      <div class="body">
+        <div class="field">
+          <label class="lbl" for="offset">Calibration offset (dB)</label>
+          <input id="offset" type="number" step="0.5" value="100">
+          <span class="note">Phone microphones aren't calibrated. Hold the phone beside a real sound level meter and adjust this until both match. Use the same offset on every phone in the survey.</span>
+        </div>
+        <div class="two">
+          <div class="field">
+            <label class="lbl" for="weighting">Weighting</label>
+            <select id="weighting"><option value="A">A (human hearing)</option><option value="Z">Z (flat)</option></select>
+          </div>
+          <div class="field">
+            <label class="lbl" for="zone">Compare against</label>
+            <select id="zone">
+              <option value="res">Residential 55 / 48</option>
+              <option value="edu">Health &amp; schools 55 / 50</option>
+              <option value="mix">Mixed use 60 / 55</option>
+              <option value="com">Commercial 75 / 65</option>
+            </select>
+          </div>
+        </div>
+        <span class="note">Ghana EPA ambient limits in dB(A), day (6am–10pm) / night.</span>
+      </div>
+    </details>
+
+    <div class="about">
+      <div class="card"><h4>Citizen science</h4><p>Every reading adds evidence about where noise comes from and when. Many phones over many nights reveal patterns no single complaint can.</p></div>
+      <div class="card"><h4>Your data</h4><p>Readings stay on this phone until you export them. One person can import everyone's CSV files to build the shared map.</p></div>
+      <div class="card"><h4>Accuracy</h4><p>Phone readings are indicative. Calibrate, then follow up hotspots with certified measurements. Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>.</p></div>
+    </div>
+  </main>
+</div>
 
 <script src="vendor/leaflet/leaflet.js"></script>
 <script>
@@ -506,65 +447,24 @@ const KEY="noisemap.readings.v1", SKEY="noisemap.settings.v1";
 const ZONES={res:[55,48],edu:[55,50],mix:[60,55],com:[75,65]};
 const CATS=["Church","Mosque","Event / party","Bar / club","Traffic","Market / trader","Generator / industry","Other"];
 const BANDS=[
-  {max:55,name:"Quiet",v:"--q",range:"< 55"},
-  {max:65,name:"Noticeable",v:"--m",range:"55–65"},
-  {max:75,name:"Loud",v:"--l",range:"65–75"},
-  {max:85,name:"Very loud",v:"--vl",range:"75–85"},
-  {max:1e9,name:"Harmful",v:"--x",range:"85+"}
+  {max:55,name:"Quiet",v:"--q"},{max:65,name:"Noticeable",v:"--m"},{max:75,name:"Loud",v:"--l"},
+  {max:85,name:"Very loud",v:"--vl"},{max:1e9,name:"Harmful",v:"--x"}
 ];
+const GRAD={"--q":["#8fd3a8","#2f8a5d","#123a2a"],"--m":["#f4d27a","#c98f22","#5a3708"],"--l":["#f6b06e","#e0602e","#7a2412"],
+  "--vl":["#f48a7e","#c62f2c","#5c0f12"],"--x":["#cfa2f4","#7b37b8","#2b0f4a"]};
+const grad=(v,ang)=>{const g=GRAD[v]||["#cdb79c","#8f7760","#3f3428"];return `radial-gradient(${ang||"130% 110% at 88% 0%"},${g[0]} 0%,${g[1]} 46%,${g[2]} 100%)`};
+const TARGET=60;
 
 let settings=Object.assign({offset:100,weighting:"A",zone:"res",hideEx:false},store.get(SKEY,{}));
 let readings=store.get(KEY,[]);
+let query="",showAll=false;
 $("offset").value=settings.offset; $("weighting").value=settings.weighting; $("zone").value=settings.zone;
 function saveSettings(){store.set(SKEY,settings)}
 $("offset").addEventListener("change",e=>{const v=parseFloat(e.target.value);if(!isNaN(v)){settings.offset=v;saveSettings()}});
 $("weighting").addEventListener("change",e=>{settings.weighting=e.target.value;saveSettings();updateWLabel()});
 $("zone").addEventListener("change",e=>{settings.zone=e.target.value;saveSettings();renderAll();placeLimit()});
 
-/* ---------- Marquee band (legend) ---------- */
-(function(){
-  const ul=()=>"<ul>"+BANDS.map(b=>`<li><i style="background:var(${b.v})"></i>${b.name} <small>${b.range} dB</small></li>`).join("")+"</ul>";
-  document.querySelector(".band").innerHTML=ul()+ul()+ul()+ul();
-})();
-
-/* ---------- Topographic background ---------- */
-function drawTopo(){
-  const c=$("topo"),dpr=Math.min(2,window.devicePixelRatio||1),w=c.clientWidth,h=c.clientHeight;
-  c.width=w*dpr;c.height=h*dpr;const g=c.getContext("2d");g.scale(dpr,dpr);
-  const centers=[[w*.78,h*.32],[w*.15,h*.85],[w*.5,h*1.1]];
-  g.lineWidth=1;
-  centers.forEach((ct,ci)=>{
-    for(let k=1;k<26;k++){
-      const base=k*26+ci*8;g.beginPath();
-      for(let a=0;a<=Math.PI*2+0.01;a+=Math.PI/90){
-        const n=Math.sin(a*3+k*.35+ci)*10+Math.sin(a*5-k*.2)*6+Math.cos(a*2+ci*2)*k*1.4;
-        const r=base+n,x=ct[0]+Math.cos(a)*r*1.25,y=ct[1]+Math.sin(a)*r;
-        a?g.lineTo(x,y):g.moveTo(x,y);
-      }
-      g.strokeStyle=k%5===0?"rgba(221,242,64,.16)":"rgba(255,255,255,.06)";g.stroke();
-    }
-  });
-}
-drawTopo();
-let tt;window.addEventListener("resize",()=>{clearTimeout(tt);tt=setTimeout(drawTopo,200)});
-
-/* ---------- Dot ring ---------- */
-const RING_N=48,RING_MIN=30,RING_MAX=110;
-const ringDots=[];
-(function(){
-  const svg=$("ring"),ns="http://www.w3.org/2000/svg";
-  for(let i=0;i<RING_N;i++){
-    const a=-Math.PI*1.25+i/(RING_N-1)*Math.PI*1.5,c=document.createElementNS(ns,"circle");
-    c.setAttribute("cx",(Math.cos(a)*96).toFixed(2));c.setAttribute("cy",(Math.sin(a)*96).toFixed(2));c.setAttribute("r","4.2");c.setAttribute("class","d");
-    svg.appendChild(c);ringDots.push({el:c,level:RING_MIN+i/(RING_N-1)*(RING_MAX-RING_MIN)});
-  }
-  const lim=document.createElementNS(ns,"circle");lim.setAttribute("r","8");lim.setAttribute("class","lim");lim.id="limRing";svg.appendChild(lim);
-})();
-function setRing(lvl){
-  ringDots.forEach(d=>{d.el.style.fill=(lvl!=null&&d.level<=lvl)?`var(${bandOf(d.level).v})`:""});
-}
-
-/* ---------- Example data (shown only until the first real reading) ---------- */
+/* ---------- Example data ---------- */
 function examples(){
   const base=[5.6037,-0.1870], now=Date.now(), d=864e5;
   const ex=[
@@ -579,15 +479,13 @@ function examples(){
     id:"ex"+i,example:true,place:e[0],category:e[1],lat:base[0]+e[2][0],lng:base[1]+e[2][1],acc:8,
     leq:e[3],lmax:e[4],l90:e[3]-9,dur:60,weighting:"A",offset:100,distance:e[5],notes:"Example data",ts:t.getTime()}});
 }
-function visible(){
-  if(readings.length) return readings;
-  return settings.hideEx?[]:examples();
-}
+function visible(){ if(readings.length) return readings; return settings.hideEx?[]:examples(); }
+function matches(r){ return !query || (r.place+" "+r.category+" "+(r.notes||"")).toLowerCase().includes(query); }
 
 /* ---------- Helpers ---------- */
 const fmt1=v=>v==null||!isFinite(v)?"--":v.toFixed(1);
 function bandOf(v){
-  if(v==null||!isFinite(v)) return {name:"Idle",v:"--grey",hex:css("--grey")};
+  if(v==null||!isFinite(v)) return {name:"Ready",v:null,hex:"#8f7760"};
   const b=BANDS.find(b=>v<b.max);return {name:b.name,v:b.v,hex:css(b.v)};
 }
 function isDay(ts){const h=new Date(ts).getHours();return h>=6&&h<22}
@@ -596,12 +494,14 @@ function energyAvg(arr){if(!arr.length)return null;let s=0;for(const v of arr)s+
 function when(ts){const d=new Date(ts);return d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"})}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+const clean=s=>String(s).replace(/^Example:\s*/,"");
 function updateWLabel(){const a=settings.weighting==="A";$("wLabel").textContent=a?"A-weighted":"Unweighted (Z)";$("liveUnit").textContent=a?"dB(A)":"dB(Z)"}
 updateWLabel();
+const mmss=s=>Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
 
 /* ---------- Audio meter ---------- */
 let ctx=null,stream=null,analyser=null,timeBuf,freqBuf,aw=null,timer=null,wakeLock=null;
-let recording=false,samples=[],recStart=0,liveHistory=[];
+let recording=false,samples=[],recStart=0,liveHistory=[],curBand="idle";
 
 function aWeight(f){
   if(f<=0) return 0;
@@ -612,12 +512,12 @@ function aWeight(f){
 async function startMic(){
   const msg=$("micMsg");
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
-    msg.textContent="This browser can't open the microphone. Open the page over https:// in Chrome, Safari or Firefox.";msg.className="msg err";return;
+    msg.textContent="This browser can't open the microphone. Open the page over https:// in Chrome, Safari or Firefox.";return;
   }
   try{
     stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
   }catch(e){
-    msg.textContent="Microphone access was blocked. Allow it in your browser's site settings, then try again.";msg.className="msg err";return;
+    msg.textContent="Microphone access was blocked. Allow it in your browser's site settings, then try again.";return;
   }
   ctx=new (window.AudioContext||window.webkitAudioContext)();
   const src=ctx.createMediaStreamSource(stream);
@@ -629,9 +529,10 @@ async function startMic(){
   for(let i=0;i<aw.length;i++) aw[i]=aWeight(i*binHz);
   timer=setInterval(tick,125);
   try{if("wakeLock" in navigator) wakeLock=await navigator.wakeLock.request("screen")}catch(e){}
-  msg.textContent="Microphone on. Point it toward the source and keep your hand off the mic hole.";msg.className="msg";
-  $("btnMic").textContent="Stop microphone";$("btnMic").classList.remove("btn-lime");
-  $("btnRec").disabled=false;$("btnRec").classList.add("btn-lime");$("btnReset").disabled=false;
+  msg.textContent="Microphone on. Point it toward the source and keep your hand off the mic hole.";
+  $("btnMic").textContent="Stop microphone";$("btnMic").classList.add("glass");
+  $("btnRec").disabled=false;$("btnRec").classList.remove("glass");$("btnReset").disabled=false;$("pRec").disabled=false;
+  $("livePill").hidden=false;updatePlayer();
 }
 function stopMic(){
   if(recording) toggleRec();
@@ -639,9 +540,9 @@ function stopMic(){
   if(stream) stream.getTracks().forEach(t=>t.stop());
   if(ctx) ctx.close();ctx=null;stream=null;
   try{wakeLock&&wakeLock.release()}catch(e){} wakeLock=null;
-  $("btnMic").textContent="Start microphone";$("btnMic").classList.add("btn-lime");
-  $("btnRec").disabled=true;$("btnRec").classList.remove("btn-lime");$("live").textContent="--";setBand(null);setRing(null);
-  $("micMsg").textContent="";
+  $("btnMic").textContent="Start microphone";$("btnMic").classList.remove("glass");
+  $("btnRec").disabled=true;$("btnRec").classList.add("glass");$("pRec").disabled=true;
+  $("live").textContent="—";setBand(null);$("livePill").hidden=true;$("micMsg").textContent="Microphone off.";
 }
 function tick(){
   analyser.getFloatTimeDomainData(timeBuf);
@@ -657,13 +558,12 @@ function tick(){
   lvl=Math.max(0,lvl);
   liveHistory.push(lvl);if(liveHistory.length>240)liveHistory.shift();
   if(recording) samples.push(lvl);
-  render(lvl);
+  $("live").textContent=lvl.toFixed(0);setBand(lvl);drawTrace();
+  if(recording||samples.length){updateStats();updatePlayer()}
 }
-function setBand(v){const b=bandOf(v);$("band").textContent=b.name;$("band").style.color=`var(${b.v})`;$("bandDot").style.background=`var(${b.v})`}
-function render(lvl){
-  $("live").textContent=lvl.toFixed(0);setBand(lvl);setRing(lvl);
-  drawTrace();
-  if(recording||samples.length) updateStats();
+function setBand(v){
+  const b=bandOf(v),key=b.v||"idle";$("band").textContent=b.name;
+  if(key!==curBand){curBand=key;document.querySelectorAll(".live-card .bg").forEach(el=>el.classList.toggle("on",el.dataset.b===key))}
 }
 function sessionStats(){
   if(!samples.length) return null;
@@ -673,43 +573,51 @@ function sessionStats(){
 function updateStats(){
   const s=sessionStats();
   $("sLeq").textContent=s?fmt1(s.leq):"--";$("sMax").textContent=s?fmt1(s.lmax):"--";$("sL90").textContent=s?fmt1(s.l90):"--";
-  const d=s?Math.round(s.dur):0;$("sDur").textContent=Math.floor(d/60)+":"+String(d%60).padStart(2,"0");
+  $("sDur").textContent=mmss(s?s.dur:0);
+}
+function updatePlayer(){
+  const s=sessionStats(),d=s?s.dur:0;
+  $("pTime").textContent=mmss(d);
+  $("pTrack").style.transform=`scaleX(${Math.min(1,d/TARGET)})`;
+  const place=$("place").value.trim();
+  $("pTitle").textContent=recording?`Recording${place?" · "+place:""}`:(d?`Paused · ${mmss(d)} recorded`:(ctx?"Ready to record":"Not recording"));
+  $("pRec").classList.toggle("rec",recording);
+  $("pRec").innerHTML=recording?'<svg viewBox="0 0 16 16"><rect x="4" y="3" width="3" height="10" rx="1" fill="currentColor"/><rect x="9" y="3" width="3" height="10" rx="1" fill="currentColor"/></svg>'
+    :'<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="currentColor"/></svg>';
+  $("pRec").setAttribute("aria-label",recording?"Pause recording":"Record");
 }
 function drawTrace(){
   const c=$("trace"),dpr=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;
   if(!w)return;
   if(c.width!==Math.round(w*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr)}
   const g=c.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
-  const y=v=>h-4-Math.min(1,Math.max(0,(v-30)/80))*(h-8);
+  const y=v=>h-3-Math.min(1,Math.max(0,(v-30)/80))*(h-6);
   const ly=y(limitFor(Date.now()));
-  g.fillStyle=css("--grey-2");
-  for(let x=0;x<w;x+=8){g.beginPath();g.arc(x+2,ly,1.2,0,Math.PI*2);g.fill()}
+  g.strokeStyle="rgba(255,255,255,.45)";g.setLineDash([2,4]);g.lineWidth=1;g.beginPath();g.moveTo(0,ly);g.lineTo(w,ly);g.stroke();g.setLineDash([]);
   if(liveHistory.length<2) return;
-  g.strokeStyle=css("--lime");g.lineWidth=2;g.lineJoin="round";g.beginPath();
+  g.strokeStyle="#fff";g.lineWidth=1.8;g.lineJoin="round";g.beginPath();
   liveHistory.forEach((v,i)=>{const x=i/239*w;i?g.lineTo(x,y(v)):g.moveTo(x,y(v))});
   g.stroke();
-  const lx=(liveHistory.length-1)/239*w,lyv=y(liveHistory[liveHistory.length-1]);
-  g.fillStyle=css("--white");g.beginPath();g.arc(lx,lyv,4,0,Math.PI*2);g.fill();
 }
-function placeLimit(){
-  const lim=limitFor(Date.now());
-  $("limitNow").textContent=`Limit now ${lim} dB · ${isDay(Date.now())?"day":"night"}`;
-  const t=(lim-RING_MIN)/(RING_MAX-RING_MIN),a=-Math.PI*1.25+t*Math.PI*1.5,r=$("limRing");
-  r.setAttribute("cx",(Math.cos(a)*96).toFixed(2));r.setAttribute("cy",(Math.sin(a)*96).toFixed(2));
-}
+function placeLimit(){ $("limitNow").textContent=`Limit ${limitFor(Date.now())} dB · ${isDay(Date.now())?"day":"night"}`; }
 placeLimit();
 function toggleRec(){
+  if(!ctx) return;
   recording=!recording;
   const b=$("btnRec");
   if(recording){
     if(!samples.length) recStart=Date.now();
-    b.textContent="Pause";b.classList.add("btn-rec");b.classList.remove("btn-lime");
-    $("micMsg").textContent="Recording. Aim for at least 30 seconds.";$("micMsg").className="msg";
-  }else{b.textContent=samples.length?"Resume":"Record";b.classList.remove("btn-rec");b.classList.add("btn-lime")}
+    b.innerHTML='<span class="dot"></span>Pause';b.classList.add("rec");
+    $("micMsg").textContent="Recording. Aim for at least 30 seconds.";
+  }else{b.innerHTML=`<span class="dot"></span>${samples.length?"Resume":"Record"}`;b.classList.remove("rec")}
+  updatePlayer();
 }
+function resetSession(){if(recording)toggleRec();samples=[];$("btnRec").innerHTML='<span class="dot"></span>Record';updateStats();["sLeq","sMax","sL90"].forEach(i=>$(i).textContent="--");updatePlayer()}
 $("btnMic").addEventListener("click",()=>ctx?stopMic():startMic());
 $("btnRec").addEventListener("click",toggleRec);
-$("btnReset").addEventListener("click",()=>{if(recording)toggleRec();samples=[];$("btnRec").textContent="Record";updateStats();["sLeq","sMax","sL90"].forEach(i=>$(i).textContent="--")});
+$("pRec").addEventListener("click",toggleRec);
+$("btnReset").addEventListener("click",resetSession);
+$("place").addEventListener("input",()=>{if(recording)updatePlayer()});
 new ResizeObserver(drawTrace).observe($("trace"));
 drawTrace();
 
@@ -720,21 +628,24 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,att
 map.on("focus",()=>map.scrollWheelZoom.enable());map.on("blur",()=>map.scrollWheelZoom.disable());
 const layer=L.layerGroup().addTo(map);
 let pick=null,pickMarker=null,activeCats=new Set(CATS);
+const markers={};
 
 function setPick(lat,lng,acc,src){
   pick={lat,lng,acc};
-  if(!pickMarker){pickMarker=L.circleMarker([lat,lng],{radius:8,color:css("--lime"),weight:2.5,fillColor:"#000",fillOpacity:1,dashArray:"3 3"}).addTo(map)}
+  if(!pickMarker){pickMarker=L.circleMarker([lat,lng],{radius:8,color:"#fff",weight:2.5,fillColor:"#e2683c",fillOpacity:1,dashArray:"3 3"}).addTo(map)}
   else pickMarker.setLatLng([lat,lng]);
   $("locText").textContent=lat.toFixed(5)+", "+lng.toFixed(5)+(acc?" ± "+Math.round(acc)+" m":"")+" ("+src+")";
 }
 map.on("click",e=>setPick(e.latlng.lat,e.latlng.lng,null,"map"));
-$("btnGps").addEventListener("click",()=>{
+function gps(center){
   if(!navigator.geolocation){$("locText").textContent="GPS isn't available here. Tap the map instead.";return}
   $("locText").textContent="Finding you…";
   navigator.geolocation.getCurrentPosition(p=>{
     setPick(p.coords.latitude,p.coords.longitude,p.coords.accuracy,"GPS");map.setView([p.coords.latitude,p.coords.longitude],17);
   },()=>{$("locText").textContent="Location was blocked or timed out. Allow location, or tap the map."},{enableHighAccuracy:true,timeout:15000,maximumAge:0});
-});
+}
+$("btnGps").addEventListener("click",()=>gps());
+$("btnLocate").addEventListener("click",()=>gps());
 
 function buildFilters(){
   const f=$("filters");f.innerHTML="";
@@ -744,78 +655,107 @@ function buildFilters(){
     f.appendChild(b)});
 }
 function drawMap(fit){
-  layer.clearLayers();
-  const list=visible().filter(r=>activeCats.has(r.category));
+  layer.clearLayers();for(const k in markers)delete markers[k];
+  const list=visible().filter(r=>activeCats.has(r.category)&&matches(r));
+  $("pinCount").textContent=list.length+" reading"+(list.length===1?"":"s");
   list.slice().sort((a,b)=>a.leq-b.leq).forEach(r=>{
     const b=bandOf(r.leq),lim=limitFor(r.ts),over=r.leq-lim,rad=6+Math.max(0,(r.leq-45))/2.6;
-    L.circleMarker([r.lat,r.lng],{radius:rad*1.9,stroke:false,fillColor:b.hex,fillOpacity:.16,interactive:false}).addTo(layer);
-    L.circleMarker([r.lat,r.lng],{radius:rad,color:"#000",weight:2,fillColor:b.hex,fillOpacity:.95})
+    L.circleMarker([r.lat,r.lng],{radius:rad*2,stroke:false,fillColor:b.hex,fillOpacity:.18,interactive:false}).addTo(layer);
+    markers[r.id]=L.circleMarker([r.lat,r.lng],{radius:rad,color:"#fff",weight:2,fillColor:b.hex,fillOpacity:1})
      .bindPopup(`<b>${esc(r.place)}</b>${esc(r.category)}${r.example?' <span class="tag">Example</span>':''}<br>
        <span class="mono">Leq ${fmt1(r.leq)} · Max ${fmt1(r.lmax)} dB(${esc(r.weighting||"A")})</span><br>
-       ${over>0?`<span class="popup-over">${over.toFixed(1)} dB over the ${lim} dB ${isDay(r.ts)?"day":"night"} limit</span>`:`<span class="popup-ok">Within the ${lim} dB ${isDay(r.ts)?"day":"night"} limit</span>`}<br>
+       ${over>0?`<span class="over">${over.toFixed(1)} dB over the ${lim} dB ${isDay(r.ts)?"day":"night"} limit</span>`:`<span class="ok">Within the ${lim} dB ${isDay(r.ts)?"day":"night"} limit</span>`}<br>
        ${when(r.ts)}${r.distance?` · ${r.distance} m from source`:""}${r.notes&&!r.example?`<br><i>${esc(r.notes)}</i>`:""}`)
      .addTo(layer);
   });
-  if(fit&&list.length){map.fitBounds(L.latLngBounds(list.map(r=>[r.lat,r.lng])).pad(.25),{maxZoom:17})}
+  if(fit&&list.length){map.fitBounds(L.latLngBounds(list.map(r=>[r.lat,r.lng])).pad(.3),{maxZoom:17})}
+}
+function focusReading(r){
+  map.setView([r.lat,r.lng],17);
+  if(window.matchMedia("(max-width:960px)").matches) $("map-sec").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"});
+  setTimeout(()=>{markers[r.id]&&markers[r.id].openPopup()},250);
 }
 
-/* ---------- Results ---------- */
-function renderTables(){
-  const list=visible().slice().sort((a,b)=>b.ts-a.ts);
+/* ---------- Lists ---------- */
+function thumb(v){return `<span class="thumb" style="background:${grad(bandOf(v).v,"120% 120% at 85% 0%")}"><b>${isFinite(v)?Math.round(v):"--"}</b></span>`}
+function renderLists(){
+  const all=visible(),list=all.filter(matches).slice().sort((a,b)=>b.ts-a.ts);
+  // recent
+  const rc=$("recent");rc.innerHTML="";
+  const recent=showAll?list:list.slice(0,4);
+  if(!recent.length) rc.innerHTML=`<p class="empty">${query?"No readings match that search.":"No readings yet. Record one and save it."}</p>`;
+  recent.forEach(r=>{
+    const lim=limitFor(r.ts),el=document.createElement("div");el.className="item";el.tabIndex=0;el.setAttribute("role","button");
+    el.innerHTML=`${thumb(r.leq)}<div style="min-width:0"><h4>${esc(clean(r.place))}</h4><p>${esc(r.category)} · ${when(r.ts)}${r.distance?" · "+r.distance+" m away":""}${r.example?' · <span class="tag">Example</span>':""}</p></div>
+      <span class="end ${r.leq>lim?"over":""}">${r.leq>lim?"+"+(r.leq-lim).toFixed(1)+" dB":"OK"}</span>`;
+    el.addEventListener("click",()=>focusReading(r));el.addEventListener("keydown",e=>{if(e.key==="Enter")focusReading(r)});
+    rc.appendChild(el);
+  });
+  $("btnAll").textContent=showAll?"Show fewer":"See all";
+  $("btnAll").hidden=list.length<=4;
+
+  // sources
+  const groups={};
+  list.forEach(r=>{const nm=clean(r.place).replace(/,.*$/,"").trim(),k=nm.toLowerCase();(groups[k]=groups[k]||{name:nm,cat:r.category,rs:[]}).rs.push(r)});
+  const rows=Object.values(groups).map(g=>({...g,avg:energyAvg(g.rs.map(r=>r.leq)),peak:Math.max(...g.rs.map(r=>r.lmax||r.leq)),over:g.rs.filter(r=>r.leq>limitFor(r.ts)).length,ex:g.rs[0].example}))
+    .sort((a,b)=>b.avg-a.avg);
+  const fe=$("feature"),sc=$("sources");fe.innerHTML="";sc.innerHTML="";
+  if(!rows.length) sc.innerHTML='<p class="empty">Sources appear here once readings are saved.</p>';
+  rows.forEach((g,i)=>{
+    if(i===0){
+      fe.innerHTML=`<article class="feature"><div class="bgf" style="background:${grad(bandOf(g.avg).v)}"></div><div class="grain"></div>
+        <div class="tpills"><span class="tpill">Loudest source</span><span class="tpill">${esc(g.cat)}</span>${g.ex?'<span class="tpill">Example</span>':""}<span class="spacer"></span><span class="wpill">${fmt1(g.avg)} dB Leq</span></div>
+        <h3>${esc(g.name)}</h3><p>Peak ${fmt1(g.peak)} dB · ${g.over?`over the limit on ${g.over} of ${g.rs.length} visit${g.rs.length>1?"s":""}`:"within the limit on every visit"}</p></article>`;
+      return;
+    }
+    const el=document.createElement("div");el.className="item";
+    el.innerHTML=`${thumb(g.avg)}<div style="min-width:0"><h4>${esc(g.name)}</h4><p>${esc(g.cat)} · ${g.rs.length} visit${g.rs.length>1?"s":""} · peak ${fmt1(g.peak)} dB</p></div>
+      <span class="end ${g.over?"over":""}">${g.over}/${g.rs.length} over</span>`;
+    el.addEventListener("click",()=>focusReading(g.rs[0]));
+    sc.appendChild(el);
+  });
+  $("sumCount").textContent=rows.length?`${rows.length} source${rows.length>1?"s":""}`:"";
+
+  // table
   const tb=$("readTable").tBodies[0];tb.innerHTML="";
-  if(!list.length) tb.innerHTML='<tr><td colspan="7" class="empty">No readings yet. Record one and press Save reading.</td></tr>';
+  if(!list.length) tb.innerHTML='<tr><td colspan="7" class="empty">No readings to show.</td></tr>';
   list.forEach(r=>{
     const lim=limitFor(r.ts),tr=document.createElement("tr");
-    tr.innerHTML=`<td>${when(r.ts)}</td><td>${esc(r.place)} ${r.example?'<span class="tag">Example</span>':""}</td>
-      <td class="num ${r.leq>lim?"over":""}"><span class="lvl"><i style="background:var(${bandOf(r.leq).v})"></i>${fmt1(r.leq)}</span></td><td class="num">${fmt1(r.lmax)}</td><td class="num">${lim}</td>
-      <td class="num">${r.distance?r.distance+" m":"–"}</td><td>${r.example?"":'<button type="button">Delete</button>'}</td>`;
+    tr.innerHTML=`<td>${when(r.ts)}</td><td>${esc(clean(r.place))} ${r.example?'<span class="tag">Example</span>':""}</td>
+      <td class="num ${r.leq>lim?"over":""}"><span class="lv"><i style="background:var(${bandOf(r.leq).v})"></i>${fmt1(r.leq)}</span></td><td class="num">${fmt1(r.lmax)}</td><td class="num">${lim}</td>
+      <td class="num">${r.distance?r.distance+" m":"–"}</td><td>${r.example?"":'<button class="dbtn sm light" type="button">Delete</button>'}</td>`;
     const del=tr.querySelector("button");
     if(del){let armed=false;del.addEventListener("click",()=>{
       if(!armed){armed=true;del.textContent="Confirm";setTimeout(()=>{armed=false;del.textContent="Delete"},3000);return}
       readings=readings.filter(x=>x.id!==r.id);store.set(KEY,readings);renderAll(false)})}
-    tr.addEventListener("click",e=>{if(e.target.tagName!=="BUTTON"){map.setView([r.lat,r.lng],17);document.getElementById("map-sec").scrollIntoView()}});
+    tr.addEventListener("click",e=>{if(e.target.tagName!=="BUTTON")focusReading(r)});
     tb.appendChild(tr);
   });
-  const groups={};
-  list.forEach(r=>{const nm=r.place.replace(/,.*$/,"").trim(),k=nm.toLowerCase();(groups[k]=groups[k]||{name:nm,cat:r.category,rs:[]}).rs.push(r)});
-  const rows=Object.values(groups).map(g=>({...g,avg:energyAvg(g.rs.map(r=>r.leq)),peak:Math.max(...g.rs.map(r=>r.lmax||r.leq)),over:g.rs.filter(r=>r.leq>limitFor(r.ts)).length,last:Math.max(...g.rs.map(r=>r.ts))}))
-    .sort((a,b)=>b.avg-a.avg);
-  const sc=$("sources");sc.innerHTML="";
-  if(!rows.length) sc.innerHTML='<p class="empty">Sources appear here once you save readings.</p>';
-  rows.forEach((g,i)=>{
-    const b=bandOf(g.avg),el=document.createElement("article");el.className="scard";
-    el.innerHTML=`<div class="top"><span class="datepill">${new Date(g.last).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})}</span><span class="cat">#${i+1} · ${esc(g.cat)}</span></div>
-      <div class="big">${fmt1(g.avg)}<small>dB Leq</small></div>
-      <div class="meta">Peak ${fmt1(g.peak)} · ${g.rs.length} visit${g.rs.length>1?"s":""}</div>
-      <div class="foot" style="background:var(${b.v})"><h4>${esc(g.name.replace(/^Example:\s*/,""))}</h4><span>${g.over?`Over the limit on ${g.over} of ${g.rs.length} visits`:"Within the limit on every visit"}${g.rs[0].example?" · Example":""}</span></div>`;
-    sc.appendChild(el);
-  });
-  $("sumCount").textContent=rows.length?`${rows.length} source${rows.length>1?"s":""} so far.`:"";
-  $("exampleNotice").hidden=!(list.length&&list[0].example);
-  // hero stats
-  const over=list.filter(r=>r.leq>limitFor(r.ts)).length;
-  $("hsReadings").textContent=list.length;
-  $("hsSources").textContent=rows.length;
-  $("hsOver").textContent=list.length?Math.round(over/list.length*100)+"%":"0%";
-  $("hsMax").textContent=list.length?fmt1(Math.max(...list.map(r=>r.leq))):"--";
+
+  $("exampleNotice").hidden=!(all.length&&all[0].example);
+  const over=all.filter(r=>r.leq>limitFor(r.ts)).length;
+  const srcAll=new Set(all.map(r=>clean(r.place).replace(/,.*$/,"").trim().toLowerCase()));
+  $("cReadings").textContent=all.length;$("cSources").textContent=srcAll.size;
+  $("cOver").textContent=all.length?Math.round(over/all.length*100)+"%":"0%";
 }
-function renderAll(fit){drawMap(fit);renderTables()}
+function renderAll(fit){drawMap(fit);renderLists()}
 $("btnHideEx").addEventListener("click",()=>{settings.hideEx=true;saveSettings();renderAll(false)});
+$("btnAll").addEventListener("click",()=>{showAll=!showAll;renderLists()});
+let qt;$("q").addEventListener("input",e=>{clearTimeout(qt);qt=setTimeout(()=>{query=e.target.value.trim().toLowerCase();renderAll(!!query)},150)});
 
 /* ---------- Save ---------- */
 $("form").addEventListener("submit",e=>{
   e.preventDefault();
   const m=$("saveMsg");m.className="msg err";
   const s=sessionStats();
-  if(!s||s.dur<5){m.textContent="Record at least a few seconds first: Start microphone, then Record.";return}
-  if(!pick){m.textContent="Set a location first: press Use my GPS or tap the map.";return}
+  if(!s||s.dur<5){m.textContent="Record at least a few seconds first.";return}
+  if(!pick){m.textContent="Set a location: use GPS or tap the map.";return}
   const r={id:uid(),place:$("place").value.trim(),category:$("category").value,lat:pick.lat,lng:pick.lng,acc:pick.acc,
     leq:+s.leq.toFixed(1),lmax:+s.lmax.toFixed(1),l90:+s.l90.toFixed(1),dur:Math.round(s.dur),weighting:settings.weighting,
     offset:settings.offset,distance:$("distance").value?+$("distance").value:null,notes:$("notes").value.trim(),ts:recStart||Date.now()};
   readings.push(r);store.set(KEY,readings);
-  if(recording)toggleRec();samples=[];$("btnRec").textContent="Record";updateStats();
-  $("notes").value="";
-  m.className="msg ok";m.textContent=`Saved: ${r.place}, Leq ${r.leq} dB(${r.weighting}).`;
+  resetSession();$("notes").value="";
+  m.className="msg good";m.textContent=`Saved · ${r.leq} dB(${r.weighting}). Thank you for contributing.`;
   renderAll(readings.length===1);
 });
 
@@ -871,8 +811,9 @@ $("importFile").addEventListener("change",async e=>{
   renderAll(true);
 });
 
-buildFilters();renderAll(true);
+buildFilters();renderAll(true);updatePlayer();
 setInterval(placeLimit,60000);
+window.addEventListener("resize",()=>map.invalidateSize());
 
 /* ---------- Install as app ---------- */
 if("serviceWorker" in navigator && location.protocol==="https:"){
