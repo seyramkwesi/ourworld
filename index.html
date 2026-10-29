@@ -25,6 +25,7 @@
   --sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --sys-d:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --rounded:ui-rounded,"SF Pro Rounded","Nunito","Varela Round",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   --ease-out:cubic-bezier(0.23,1,0.32,1);
   color-scheme:light;
 }
@@ -58,7 +59,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .colA,.colB{min-width:0;display:flex;flex-direction:column;gap:18px}
 
 /* Hero device */
-.hero{display:flex;flex-direction:column;align-items:center;padding-top:14px}
+.hero{display:flex;flex-direction:column;align-items:center;padding-top:14px;overflow-x:clip;overflow-y:visible;margin-inline:-16px;padding-inline:16px}
 .deck{position:relative;width:min(100%,380px);cursor:pointer;-webkit-tap-highlight-color:transparent;border:0;background:none;padding:18px 0 6px;transition:transform 160ms var(--ease-out)}
 .deck:active{transform:scale(.985)}
 .deck svg{width:100%;height:auto;display:block;overflow:visible;filter:drop-shadow(0 22px 26px rgba(0,0,0,.28)) drop-shadow(0 4px 6px rgba(0,0,0,.18))}
@@ -88,6 +89,72 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .recbtn:active{transform:scale(.95)}
 .recbtn i{display:block;width:56px;height:56px;border-radius:50%;background:var(--red);transition:width 220ms var(--ease-out),height 220ms var(--ease-out),border-radius 220ms var(--ease-out)}
 .recording .recbtn i{width:28px;height:28px;border-radius:7px}
+/* Cassette alive while recording: gentle bob, ripples scaled by loudness, running tape, REC lamp */
+.deck{isolation:isolate}
+.ripples{position:absolute;inset:18px 0 6px;z-index:-1;pointer-events:none}
+.ripples i{position:absolute;inset:0;border-radius:28px;border:2px solid var(--rc,#ff3b30);opacity:0;transform:scale(.9)}
+.recording .ripples i{animation:ripple 1.8s var(--ease-out) infinite}
+.recording .ripples i:nth-child(2){animation-delay:.6s}.recording .ripples i:nth-child(3){animation-delay:1.2s}
+@keyframes ripple{0%{opacity:var(--ro,.4);transform:scale(.94)}100%{opacity:0;transform:scale(1.12)}}
+.recording .deck svg{animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-4px) rotate(-.6deg)}}
+.tape{stroke-dasharray:3 4;animation:run .5s linear infinite;animation-play-state:paused}
+.recording .tape{animation-play-state:running}
+@keyframes run{to{stroke-dashoffset:-14}}
+.led{transition:fill 200ms ease}
+.recording .led{fill:#ff3b30;animation:glow 1.2s ease-in-out infinite}
+@keyframes glow{50%{opacity:.45}}
+
+/* Highlights tiles */
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{position:relative;border-radius:22px;padding:14px 14px 12px;min-height:138px;display:flex;flex-direction:column;gap:6px;overflow:hidden;background:var(--tbg);color:var(--tc);min-width:0;
+  animation:pop 480ms var(--ease-out) both}
+.tile:nth-child(2){animation-delay:40ms}.tile:nth-child(3){animation-delay:80ms}.tile:nth-child(4){animation-delay:120ms}.tile:nth-child(5){animation-delay:160ms}.tile:nth-child(6){animation-delay:200ms}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.97)}}
+.tile.wide{grid-column:1/-1}
+.th{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
+.th svg{width:15px;height:15px}
+.th .sp{flex:1}
+.tbig{display:flex;align-items:baseline;gap:4px;margin-top:auto}
+.tbig b{font:700 clamp(34px,9vw,44px)/1 var(--rounded);letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink)}
+.tbig span{font:600 14px var(--rounded);color:var(--tc)}
+.tile small{font-size:12px;color:rgba(0,0,0,.45)}
+.t-live{--tbg:#151517;--tc:#d8d8dc;min-height:150px}
+.t-live .tbig b{color:#fff;font-size:clamp(46px,12vw,58px)}
+.t-live .bpill{font:600 11px var(--sys);text-transform:uppercase;letter-spacing:.06em;padding:4px 9px;border-radius:999px;background:rgba(255,255,255,.1);color:var(--bc,#d8d8dc)}
+.t-live .row2{display:flex;align-items:flex-end;gap:14px;margin-top:auto}
+#spark{flex:1;height:72px;min-width:0;overflow:visible}
+#sparkLine{fill:none;stroke:var(--bc,#8a8a8e);stroke-width:2;stroke-linejoin:round;transition:stroke 200ms ease}
+#sparkLim{stroke:#ff453a;stroke-width:1;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}
+.sparkEmpty{position:absolute;right:16px;bottom:40px;font-size:12px;color:#6d6d72}
+.t-leq{--tbg:#ebe8ff;--tc:#5b4cf0}
+.t-time{--tbg:#e3f6ea;--tc:#1f9d55}
+.t-peak{--tbg:#fff0dc;--tc:#e07800}
+.t-bg{--tbg:#dff4f2;--tc:#0e9b93}
+.ring{position:relative;width:78px;height:78px;margin:auto auto 0}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:9;stroke-linecap:round}
+.ring .rt{stroke:rgba(31,157,85,.16)}
+.ring .rf{stroke:#1f9d55;transition:stroke-dashoffset 300ms var(--ease-out)}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font:700 17px var(--rounded);color:var(--ink);font-variant-numeric:tabular-nums}
+.pbars{display:flex;align-items:flex-end;gap:2px;height:34px;margin-top:4px}
+.pbars i{flex:1;min-width:2px;border-radius:2px 2px 1px 1px;background:rgba(224,120,0,.35);height:var(--h,6%);transition:height 200ms var(--ease-out)}
+.pbars i.top{background:#e07800}
+.wave{height:30px;margin-top:2px}
+.wave path{fill:none;stroke:#0e9b93;stroke-width:2;stroke-linecap:round;opacity:.6}
+.t-verdict{--tbg:#f0f0f2;--tc:#6d6d72;min-height:0;gap:8px;transition:background-color 300ms ease}
+.t-verdict.bad{--tbg:#ffe7e4;--tc:#d92d20}
+.t-verdict.good{--tbg:#e3f6ea;--tc:#1f9d55}
+.vtitle{font:700 22px/1.15 var(--rounded);color:var(--ink);letter-spacing:-.01em}
+.t-verdict p{font-size:13.5px;color:rgba(0,0,0,.6)}
+.gauge{margin-top:4px}
+.gtrack{position:relative;height:10px;border-radius:999px;background:rgba(0,0,0,.08)}
+.gfill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--tc);width:0;transition:width 400ms var(--ease-out)}
+.glim{position:absolute;top:-4px;bottom:-4px;width:2px;border-radius:2px;background:var(--ink)}
+.glim::after{content:attr(data-l);position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:600;color:var(--ink);white-space:nowrap}
+.gscale{display:flex;justify-content:space-between;font-size:10.5px;color:rgba(0,0,0,.4);margin-top:4px}
+.limlink{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card);border-radius:16px;padding:13px 16px;text-decoration:none;color:var(--ink);font-size:15px}
+.limlink b{font-weight:400;color:var(--grey);margin-left:auto}
 .hint{font-size:13px;color:var(--grey);text-align:center;margin-top:12px;min-height:1.35em;max-width:36ch;margin-inline:auto}
 .hint.err{color:var(--red)}
 
@@ -181,6 +248,7 @@ footer p+p{margin-top:6px}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   .hub{animation:none}
+  .recording .deck svg,.recording .ripples i,.tape,.recording .led,.tile{animation:none}
   .status.rec .dot,.me::after{animation:none}
   .needle,.needle2,.pack,.recbtn i{transition:none}
 }
@@ -199,6 +267,7 @@ footer p+p{margin-top:6px}
       <!-- Hero device -->
       <section class="hero" id="measure" aria-label="Sound meter">
         <button class="deck" id="deck" type="button" aria-label="Tap to record">
+          <span class="ripples" aria-hidden="true"><i></i><i></i><i></i></span>
           <svg id="cassette" viewBox="0 0 320 206" aria-hidden="true">
             <defs>
               <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3a3c"/><stop offset=".08" stop-color="#232325"/><stop offset="1" stop-color="#121213"/></linearGradient>
@@ -226,6 +295,7 @@ footer p+p{margin-top:6px}
             <!-- Tape window -->
             <rect x="66" y="128" width="188" height="50" rx="25" fill="#0a0a0a" stroke="#3a3a3c"/>
             <rect x="120" y="140" width="80" height="26" rx="3" fill="#0f0f10" stroke="#2a2a2c"/>
+            <path class="tape" d="M104 172 Q112 162 124 160 H196 Q208 162 216 172" fill="none" stroke="#4a3426" stroke-width="2.4"/>
             <g id="reelL">
               <circle class="pack" id="packL" cx="104" cy="153" r="20" fill="url(#tape)"/>
               <g class="hub"><circle cx="104" cy="153" r="9" fill="#e9e9ea"/><circle cx="104" cy="153" r="4.6" fill="#0a0a0a"/>
@@ -236,6 +306,8 @@ footer p+p{margin-top:6px}
               <g class="hub"><circle cx="216" cy="153" r="9" fill="#e9e9ea"/><circle cx="216" cy="153" r="4.6" fill="#0a0a0a"/>
                 <g fill="#e9e9ea"><rect x="214.8" y="145.5" width="2.4" height="3.4" rx=".6"/><rect x="214.8" y="157.1" width="2.4" height="3.4" rx=".6"/><rect x="208.5" y="151.8" width="3.4" height="2.4" rx=".6"/><rect x="220.1" y="151.8" width="3.4" height="2.4" rx=".6"/></g></g>
             </g>
+            <circle class="led" cx="290" cy="153" r="3.4" fill="#3a1412"/>
+            <text x="290" y="166" fill="#5a5a5e" font-size="5.5" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">REC</text>
             <!-- Bottom guide -->
             <path d="M58 206 L72 186 H248 L262 206" fill="#0e0e0f" stroke="#3a3a3c"/>
             <g fill="#050505" stroke="#2c2c2e" stroke-width=".8"><circle cx="96" cy="196" r="3.4"/><circle cx="224" cy="196" r="3.4"/><rect x="138" y="191" width="8" height="9" rx="1.5"/><rect x="174" y="191" width="8" height="9" rx="1.5"/></g>
@@ -251,17 +323,50 @@ footer p+p{margin-top:6px}
         <p class="hint" id="micMsg">Tap the button to record. Stand where residents live and record 30–60 seconds.</p>
       </section>
 
-      <!-- Live values -->
+      <!-- Highlights -->
       <div class="group">
-        <div class="ghead"><span>This recording</span><span id="wLabel">A-weighted</span></div>
-        <div class="card">
-          <div class="row"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10h2l2-5 3 10 3-8 2 3h2"/></svg></span><span class="t">Level now</span><span class="v big"><span id="live">—</span> <span id="liveUnit">dB(A)</span></span></div>
-          <div class="row"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13h14M3 13l3-4 3 2 4-6 4 4"/></svg></span><span class="t">Average<small>Leq · the value that gets saved</small></span><span class="v" id="sLeq">--</span></div>
-          <div class="row"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3v14M5 8l5-5 5 5"/></svg></span><span class="t">Peak<small>Max</small></span><span class="v" id="sMax">--</span></div>
-          <div class="row"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 14c3 0 3-3 7-3s4 3 7 3"/></svg></span><span class="t">Background<small>L90</small></span><span class="v" id="sL90">--</span></div>
-          <div class="row"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg></span><span class="t">Time recorded</span><span class="v" id="sDur">0:00</span></div>
-          <a class="row tap" href="#settings"><span class="ic"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3 3 16h14L10 3Z"/><path d="M10 8v4M10 14v.5"/></svg></span><span class="t">Legal limit now</span><span class="v" id="limitNow">55 dB · day</span><svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m1.5 1.5 5 5-5 5"/></svg></a>
+        <div class="ghead"><span>Highlights</span><span id="wLabel">A-weighted</span></div>
+        <div class="tiles">
+          <div class="tile t-live wide">
+            <div class="th"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1.5 8h2l2-4.5 3 9 2.5-6.5 1.5 2h2"/></svg>Level now<span class="sp"></span><span class="bpill" id="bandPill">Ready</span></div>
+            <div class="row2">
+              <div class="tbig"><b id="live">—</b><span id="liveUnit">dB(A)</span></div>
+              <svg id="spark" viewBox="0 0 300 72" preserveAspectRatio="none" aria-hidden="true">
+                <defs><linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".45"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>
+                <line id="sparkLim" x1="0" x2="300" y1="0" y2="0"/>
+                <path id="sparkFill" fill="url(#sparkGrad)"/><path id="sparkLine"/>
+              </svg>
+            </div>
+            <span class="sparkEmpty" id="sparkEmpty">Tap record to see the sound</span>
+          </div>
+          <div class="tile t-leq">
+            <div class="th"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 11h12M2 11l3-3.5 2.5 1.5 3-4.5 3.5 3"/></svg>Average</div>
+            <div class="tbig"><b id="sLeq">--</b><span>dB</span></div>
+            <small>Leq · the value that's saved</small>
+          </div>
+          <div class="tile t-time">
+            <div class="th"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>Time</div>
+            <div class="ring"><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="rt" cx="40" cy="40" r="33"/><circle class="rf" id="ringFill" cx="40" cy="40" r="33" stroke-dasharray="207.35" stroke-dashoffset="207.35"/></svg><b id="sDur">0:00</b></div>
+          </div>
+          <div class="tile t-peak">
+            <div class="th"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1.5 13 6 5l2.5 4 2-3 4 7"/></svg>Peak</div>
+            <div class="tbig"><b id="sMax">--</b><span>dB</span></div>
+            <div class="pbars" id="peakBars" aria-hidden="true"></div>
+          </div>
+          <div class="tile t-bg">
+            <div class="th"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1.5 10c2.2 0 2.2-3 4.5-3s2.3 3 4.5 3 2.2-3 4-3"/></svg>Background</div>
+            <div class="tbig"><b id="sL90">--</b><span>dB</span></div>
+            <svg class="wave" viewBox="0 0 120 30" preserveAspectRatio="none" aria-hidden="true"><path d="M0 15 C10 5 20 25 30 15 S50 5 60 15 S80 25 90 15 S110 5 120 15"/></svg>
+            <small>L90 · the quiet in between</small>
+          </div>
+          <div class="tile t-verdict wide" id="verdict">
+            <div class="th"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 1.8 1.5 13.5h13L8 1.8Z"/><path d="M8 6.5v3.2M8 11.6v.3"/></svg>Against the limit</div>
+            <div class="vtitle" id="vTitle">Record to see how loud it is</div>
+            <p id="vText">We compare your average with Ghana's legal limit for this time of day.</p>
+            <div class="gauge"><div class="gtrack"><i class="gfill" id="gFill"></i><i class="glim" id="gLim" data-l="55"></i></div><div class="gscale"><span>30 dB</span><span>110 dB</span></div></div>
+          </div>
         </div>
+        <a class="limlink" href="#settings">Legal limit now<b id="limitNow">55 dB · day</b><svg class="chev" style="width:8px;height:13px;color:var(--grey-2)" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m1.5 1.5 5 5-5 5"/></svg></a>
       </div>
 
       <!-- Tag -->
@@ -450,7 +555,7 @@ setReels(0);
 
 /* ---------- Audio ---------- */
 let ctx=null,stream=null,analyser=null,timeBuf,freqBuf,aw=null,timer=null,wakeLock=null;
-let recording=false,samples=[],recStart=0,disp=null;
+let recording=false,samples=[],recStart=0,disp=null,liveHist=[];
 
 function aWeight(f){
   if(f<=0) return 0;
@@ -483,6 +588,7 @@ function stopMic(){
   try{wakeLock&&wakeLock.release()}catch(e){} wakeLock=null;
   stopWatch();disp=null;
   $("live").textContent="—";$("faceNum").textContent="—";setNeedle($("needle"),null);
+  $("bandPill").textContent=samples.length?"Paused":"Ready";document.querySelector(".t-live").style.removeProperty("--bc");
 }
 function tick(){
   analyser.getFloatTimeDomainData(timeBuf);
@@ -500,6 +606,12 @@ function tick(){
   disp=(disp==null||lvl>=disp)?lvl:Math.max(lvl,disp-3); // needle ballistics: instant rise, ~24 dB/s fall
   setNeedle($("needle"),disp);
   $("live").textContent=disp.toFixed(0);$("faceNum").textContent=disp.toFixed(0);
+  liveHist.push(disp);if(liveHist.length>120)liveHist.shift();
+  const b=bandOf(disp),hero=document.querySelector(".hero");
+  hero.style.setProperty("--rc",b.v?`var(${b.v})`:"#ff3b30");
+  hero.style.setProperty("--ro",Math.min(.75,Math.max(.12,(disp-40)/55)).toFixed(2));
+  $("bandPill").textContent=b.name;document.querySelector(".t-live").style.setProperty("--bc",b.v?`var(${b.v})`:"");
+  drawSpark();
   updateStats();
 }
 function sessionStats(){
@@ -507,10 +619,42 @@ function sessionStats(){
   const sorted=samples.slice().sort((a,b)=>a-b);
   return {leq:energyAvg(samples),lmax:sorted[sorted.length-1],l90:sorted[Math.floor(sorted.length*0.1)],dur:samples.length*0.125};
 }
+/* Live sparkline: the last 15 s of level, with the legal limit dashed */
+function drawSpark(){
+  const W=300,H=72,y=v=>H-Math.min(1,Math.max(0,(v-30)/80))*H;
+  const lim=y(limitFor(Date.now()));$("sparkLim").setAttribute("y1",lim);$("sparkLim").setAttribute("y2",lim);
+  $("spark").style.color=getComputedStyle(document.querySelector(".t-live")).getPropertyValue("--bc")||"#8a8a8e";
+  $("sparkEmpty").hidden=liveHist.length>1;
+  if(liveHist.length<2){$("sparkLine").setAttribute("d","");$("sparkFill").setAttribute("d","");return}
+  const n=liveHist.length,pts=liveHist.map((v,i)=>[(W*(i+(120-n))/119).toFixed(1),y(v).toFixed(1)]);
+  const d="M"+pts.map(p=>p.join(" ")).join(" L");
+  $("sparkLine").setAttribute("d",d);$("sparkFill").setAttribute("d",d+` L${pts[n-1][0]} ${H} L${pts[0][0]} ${H} Z`);
+}
+/* Peak tile: loudest moment of each second recorded (last 24 s) */
+function drawPeaks(){
+  const secs=[];for(let i=0;i<samples.length;i+=8){secs.push(Math.max(...samples.slice(i,i+8)))}
+  const last=secs.slice(-24),wrap=$("peakBars"),top=Math.max(...last,0);
+  while(wrap.children.length<24){wrap.appendChild(document.createElement("i"))}
+  [...wrap.children].forEach((el,i)=>{const v=last[i-(24-last.length)];
+    el.style.setProperty("--h",v==null?"6%":Math.max(6,Math.min(100,(v-30)/80*100)).toFixed(0)+"%");el.classList.toggle("top",v!=null&&v===top&&top>0)});
+}
+function drawVerdict(s){
+  const el=$("verdict"),lim=limitFor(recStart||Date.now()),when=isDay(recStart||Date.now())?"day":"night";
+  $("gLim").style.left=((lim-30)/80*100)+"%";$("gLim").dataset.l=lim+" limit";
+  if(!s||s.dur<2){el.className="tile t-verdict wide";$("vTitle").textContent="Record to see how loud it is";
+    $("vText").textContent=`We compare your average with the ${lim} dB ${when} limit.`;$("gFill").style.width="0";return}
+  const diff=s.leq-lim;$("gFill").style.width=Math.max(2,Math.min(100,(s.leq-30)/80*100))+"%";
+  if(diff>0){el.className="tile t-verdict wide bad";$("vTitle").textContent=`+${diff.toFixed(1)} dB over the limit`;
+    const x=Math.pow(2,diff/10);$("vText").textContent=`Sounds about ${x<1.95?x.toFixed(1):Math.round(x)}× as loud as the ${lim} dB ${when} limit allows.`}
+  else{el.className="tile t-verdict wide good";$("vTitle").textContent="Within the limit";
+    $("vText").textContent=`${Math.abs(diff).toFixed(1)} dB under the ${lim} dB ${when} limit.`}
+}
 function updateStats(){
   const s=sessionStats(),d=s?s.dur:0,p=Math.min(1,d/TARGET);
-  $("sLeq").textContent=s?fmt1(s.leq)+" dB":"--";$("sMax").textContent=s?fmt1(s.lmax)+" dB":"--";$("sL90").textContent=s?fmt1(s.l90)+" dB":"--";
+  $("sLeq").textContent=s?fmt1(s.leq):"--";$("sMax").textContent=s?fmt1(s.lmax):"--";$("sL90").textContent=s?fmt1(s.l90):"--";
   $("sDur").textContent=mmss(d);
+  $("ringFill").style.strokeDashoffset=(207.35*(1-p)).toFixed(1);
+  drawPeaks();drawVerdict(s);
   $("pct").textContent=Math.round(p*100)+"%";$("battFill").style.setProperty("--p",p);
   setReels(p);
   const n2=$("needle2");if(s){n2.setAttribute("opacity","1");setNeedle(n2,s.leq)}else{n2.setAttribute("opacity","0")}
@@ -537,7 +681,7 @@ async function toggleRecord(){
   recording=true;setStatus();
   $("micMsg").className="hint";$("micMsg").textContent="Recording. Point the phone toward the source and hold still for 30–60 seconds.";
 }
-function resetSession(){samples=[];updateStats();setStatus();$("micMsg").className="hint";$("micMsg").textContent="Cleared. Tap the button to record again."}
+function resetSession(){samples=[];liveHist=[];drawSpark();updateStats();setStatus();$("micMsg").className="hint";$("micMsg").textContent="Cleared. Tap the button to record again."}
 $("btnRec").addEventListener("click",toggleRecord);
 $("deck").addEventListener("click",toggleRecord);
 $("btnReset").addEventListener("click",resetSession);
