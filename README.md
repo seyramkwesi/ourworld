@@ -2,13 +2,13 @@
 
 A citizen science app: a phone-based sound level meter that maps noise in a community. Surveyors record a reading, tag the source (church, mosque, event, traffic and so on) and its location, and each reading appears on a shared map coloured by loudness and checked against Ghana EPA noise limits.
 
-The interface is a dashboard: a TC-1 cassette recorder in the centre and a live map on the right, with an icon rail (a bottom tab bar on phones) for Recorder, Tag, Readings and Settings.
+The interface is a dashboard: an FR-1 field recorder in the centre and a live map on the right, with an icon rail (a bottom tab bar on phones) for Recorder, Tag, Readings and Settings.
 
 It runs entirely in the browser. There is no server, no account and no build step.
 
 ## Features
 
-- **Cassette meter**: tap the record button (or the cassette) and the cassette slides into the TC-1 recorder, the glass door closes, REC and PLAY press down and recording starts; tap again to stop and the cassette ejects. The cassette label is a watch-style dial: the long hand shows the level now, the short hand the recording's average (Leq), and ticks past the legal limit are red. While recording, sound ripples pulse out in the loudness colour, the tape runs, the REC lamp glows and the tape winds across as you approach 60 seconds.
+- **Field recorder**: an original handheld recorder with X/Y microphones. Tap it (or the record button): the screen boots, the REC key lights and live L/R level meters, time, progress and Leq run on the screen, with a red line at the legal limit. Tap again to stop; it shows "tag it" and drops back to standby.
 - **Highlights**: live tiles for the level now (with a 15-second sound graph), average, time (progress ring to 60 s), peak (per-second bars), background, and a verdict tile that says how far over or under the legal limit the recording is.
 - **Survey readings**: Leq (energy average), Max and L90 (background) over each recording.
 - **Live map**: OpenStreetMap streets or Esri satellite imagery. Each source is a category icon (church, mosque, music, car…) with its average dB. Tap the counters to filter by type, search by name, and tap a source to open its details: average, peak, visits, a dial against the limit and an open-air estimate of how far away it likely breaks the limit.

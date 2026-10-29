@@ -89,42 +89,42 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .backbtn{align-self:flex-start;width:40px;height:40px;border-radius:12px;border:0;background:var(--panel);display:grid;place-items:center;cursor:pointer;margin-bottom:-30px;position:relative;z-index:2}
 .backbtn svg{width:16px;height:16px}
 
-/* Recorder hero (cassette deck) */
+/* Recorder hero: an original handheld field recorder (X/Y mics, screen, REC key).
+   Standby: screen dim. Tap record: screen boots, REC key lights, then live meters. Stop: "tag it", back to standby. */
 .hero{display:flex;flex-direction:column;align-items:center;overflow-x:clip;margin-inline:-28px;padding-inline:28px}
-.player{position:relative;width:min(100%,400px);aspect-ratio:400/392;margin-top:20px;isolation:isolate}
-.player>svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
-.deckback{z-index:0}
-.deckfront{z-index:2;filter:drop-shadow(0 24px 28px rgba(80,40,0,.16)) drop-shadow(0 3px 5px rgba(0,0,0,.1))}
-.deck{position:absolute;z-index:1;left:10%;width:80%;top:23.47%;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;
-  transform:translateY(-46%);transition:transform 560ms var(--ease-in-out)}
-.deck svg{width:100%;height:auto;display:block;overflow:visible;filter:drop-shadow(0 10px 14px rgba(0,0,0,.3))}
-.loaded .deck{transform:translateY(0)}
-.ejecting .deck{animation:eject 520ms var(--ease-out)}
-@keyframes eject{0%{transform:translateY(0)}62%{transform:translateY(-52%)}100%{transform:translateY(-46%)}}
-@media (hover:hover) and (pointer:fine){.hero:not(.loaded) .deck:hover{transform:translateY(-43%)}}
-.door{transform-box:fill-box;transform-origin:50% 0;transform:scaleY(0);opacity:0;transition:transform 200ms var(--ease-out),opacity 200ms ease}
-.closed .door{transform:scaleY(1);opacity:1}
-.closed .player{animation:clunk 180ms var(--ease-out)}
-@keyframes clunk{40%{transform:translateY(2px)}}
-.key{transition:transform 120ms var(--ease-out)}
-.key.down{transform:translateY(3px)}
-.key.down .kface{fill:#bdbdc2}
-.deckled{transition:fill 200ms ease}
-.recording .deckled{fill:#ff3b30;animation:glow 1.2s ease-in-out infinite}
-@keyframes glow{50%{opacity:.45}}
-.hub{transform-box:fill-box;transform-origin:center;animation:spin 2.2s linear infinite;animation-play-state:paused}
-.recording .hub{animation-play-state:running}
-@keyframes spin{to{transform:rotate(360deg)}}
-.pack{transform-box:fill-box;transform-origin:center;transition:transform 400ms var(--ease-out)}
-.needle,.needle2{transform-box:view-box;transform-origin:160px 118px;transition:transform 120ms linear}
-.tape{stroke-dasharray:3 4;animation:run .5s linear infinite;animation-play-state:paused}
-.recording .tape{animation-play-state:running}
-@keyframes run{to{stroke-dashoffset:-14}}
-.ripples{position:absolute;left:0;right:0;top:17.9%;bottom:0;z-index:-1;pointer-events:none}
-.ripples i{position:absolute;inset:0;border-radius:30px;border:2px solid var(--rc,#ff3b30);opacity:0;transform:scale(.9)}
+.player{position:relative;width:min(62%,232px);aspect-ratio:260/470;margin-top:10px;isolation:isolate}
+.recdev{position:absolute;inset:0;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform 160ms var(--ease-out)}
+.recdev:active{transform:scale(.985)}
+.recdev svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 26px 30px rgba(0,0,0,.55)) drop-shadow(0 4px 6px rgba(0,0,0,.35))}
+@media (hover:hover) and (pointer:fine){.hero:not(.recording) .recdev:hover{transform:translateY(-3px) rotate(-1deg)}}
+.scr{transition:opacity 300ms ease}
+.hero:not(.on) .scr-live{opacity:.0}
+.hero:not(.on) .scr-idle{opacity:1}
+.hero.on .scr-idle{opacity:0}
+.scr-idle,.scr-live,.scr-boot{transition:opacity 220ms ease}
+.scr-boot{opacity:0}
+.booting .scr-boot{opacity:1}
+.booting .scr-live,.booting .scr-idle{opacity:0}
+.lcd{transition:fill 300ms ease}
+.hero.on .lcd{fill:#07130e}
+.recdot{transition:fill 200ms ease}
+.recording .recdot{fill:#ff3b30;animation:glow 1.1s ease-in-out infinite}
+.recring{transition:stroke 200ms ease}
+.recording .recring{stroke:#ff3b30}
+.devled{transition:fill 200ms ease}
+.recording .devled{fill:#ff3b30;animation:glow 1.1s ease-in-out infinite}
+@keyframes glow{50%{opacity:.4}}
+.capL,.capR{transform-box:view-box;transform-origin:130px 118px;transition:transform 260ms var(--ease-out)}
+.hero.on .capL{transform:rotate(-2deg)}.hero.on .capR{transform:rotate(2deg)}
+.grille{transform-box:fill-box;transform-origin:center;transition:transform 120ms linear}
+.tkey{transition:transform 120ms var(--ease-out)}
+.tkey.down{transform:translateY(2px)}.tkey.down rect{fill:#4a4a4e}
+.mseg{transition:fill 70ms linear}
+.ripples{position:absolute;left:12%;right:12%;top:25%;bottom:1%;z-index:-1;pointer-events:none}
+.ripples i{position:absolute;inset:0;border-radius:44px;border:2px solid var(--rc,#ff3b30);opacity:0;transform:scale(.9)}
 .recording .ripples i{animation:ripple 1.8s var(--ease-out) infinite}
 .recording .ripples i:nth-child(2){animation-delay:.6s}.recording .ripples i:nth-child(3){animation-delay:1.2s}
-@keyframes ripple{0%{opacity:var(--ro,.4);transform:scale(.94)}100%{opacity:0;transform:scale(1.12)}}
+@keyframes ripple{0%{opacity:var(--ro,.4);transform:scale(.96)}100%{opacity:0;transform:scale(1.16)}}
 
 /* Bottom control row */
 .ctl{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
@@ -329,8 +329,8 @@ textarea{resize:vertical;min-height:70px}
 
 @media (prefers-reduced-motion:reduce){
   .center{scroll-behavior:auto}
-  .view,.hub,.tape,.recording .ripples i,.recording .deckled,.ejecting .deck,.closed .player,.pill.rec .d,.me::after{animation:none}
-  .deck,.door,.key,.needle,.needle2,.pack,.recbtn i,.mk,.toast{transition:none}
+  .view,.recording .ripples i,.recording .recdot,.recording .devled,.pill.rec .d,.me::after{animation:none}
+  .recdev,.capL,.capR,.grille,.tkey,.mseg,.scr-idle,.scr-live,.scr-boot,.recbtn i,.mk,.toast{transition:none}
 }
 
 /* ===== Baztan-inspired skin: black · lime · cream, Unbounded display, topographic lines ===== */
@@ -502,76 +502,67 @@ input:focus,select:focus,textarea:focus{border-color:var(--lime)}
       <div class="band-outer" aria-hidden="true"><div class="band-wrap"><div class="band" id="band"></div></div></div>
       <div class="hero" id="heroBox">
         <div class="player">
-        <span class="ripples" aria-hidden="true"><i></i><i></i><i></i></span>
-        <svg class="deckback" viewBox="0 0 400 392" aria-hidden="true">
-          <rect x="0" y="70" width="400" height="322" rx="30" fill="#bfbfc4"/>
-          <rect x="28" y="84" width="344" height="222" rx="16" fill="#0b0b0c"/>
-          <rect x="60" y="66" width="280" height="10" rx="4" fill="#1a1a1b"/>
-        </svg>
-        <button class="deck" id="deck" type="button" aria-label="Tap to record">
-          <svg id="cassette" viewBox="0 0 320 206" aria-hidden="true">
+          <span class="ripples" aria-hidden="true"><i></i><i></i><i></i></span>
+          <button class="recdev" id="deck" type="button" aria-label="Tap to record">
+          <svg viewBox="0 0 260 470" aria-hidden="true">
             <defs>
-              <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3a3c"/><stop offset=".08" stop-color="#232325"/><stop offset="1" stop-color="#121213"/></linearGradient>
-              <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".10"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/></linearGradient>
-              <radialGradient id="face" cx=".5" cy=".9" r=".9"><stop offset="0" stop-color="#151516"/><stop offset="1" stop-color="#050505"/></radialGradient>
-              <radialGradient id="tape" cx=".5" cy=".5" r=".5"><stop offset=".55" stop-color="#3b2a20"/><stop offset="1" stop-color="#22170f"/></radialGradient>
-              <clipPath id="faceclip"><rect x="22" y="16" width="276" height="104" rx="10"/></clipPath>
+              <linearGradient id="gBody" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1c1c1e"/><stop offset=".18" stop-color="#36363a"/><stop offset=".55" stop-color="#29292c"/><stop offset="1" stop-color="#141416"/></linearGradient>
+              <linearGradient id="gCap" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#202022"/><stop offset=".4" stop-color="#4a4a4f"/><stop offset="1" stop-color="#18181a"/></linearGradient>
+              <pattern id="mesh" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#18181a"/><circle cx="2" cy="2" r="1.05" fill="#5a5a60"/></pattern>
+              <pattern id="spk" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="1.3" fill="#0b0b0c"/></pattern>
+              <linearGradient id="gGlass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".13"/><stop offset=".4" stop-color="#fff" stop-opacity="0"/></linearGradient>
             </defs>
-            <rect x="2" y="2" width="316" height="202" rx="16" fill="url(#body)"/>
-            <rect x="2" y="2" width="316" height="202" rx="16" fill="url(#sheen)"/>
-            <rect x="2.5" y="2.5" width="315" height="201" rx="15.5" fill="none" stroke="#4a4a4d" stroke-width="1"/>
-            <g fill="#0d0d0e" stroke="#4a4a4d" stroke-width=".8"><circle cx="13" cy="13" r="4"/><circle cx="307" cy="13" r="4"/><circle cx="13" cy="193" r="4"/><circle cx="307" cy="193" r="4"/></g>
-            <g stroke="#5a5a5e" stroke-width=".8"><path d="M11 13h4M13 11v4M305 13h4M307 11v4M11 193h4M13 191v4M305 193h4M307 191v4"/></g>
-            <!-- Label = meter face -->
-            <rect x="22" y="16" width="276" height="104" rx="10" fill="url(#face)" stroke="#2c2c2e"/>
-            <g clip-path="url(#faceclip)">
-              <g id="ticks"></g>
-              <text x="34" y="32" fill="#6d6d72" font-size="7.5" font-family="ui-monospace,Menlo,monospace" letter-spacing=".8">NOISE C-60</text>
-              <text x="286" y="32" fill="#6d6d72" font-size="7.5" font-family="ui-monospace,Menlo,monospace" text-anchor="end" id="faceUnit">dB(A)</text>
-              <text x="34" y="111" fill="#f2f2f2" font-size="20" font-weight="600" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif" id="faceNum" style="font-variant-numeric:tabular-nums">—</text><text x="286" y="111" fill="#6d6d72" font-size="7.5" font-family="ui-monospace,Menlo,monospace" text-anchor="end" id="faceState">READY</text>
-              <line class="needle2" id="needle2" x1="160" y1="118" x2="160" y2="66" stroke="#8e8e93" stroke-width="3" stroke-linecap="round" opacity="0"/>
-              <line class="needle" id="needle" x1="160" y1="124" x2="160" y2="40" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round"/>
-              <circle cx="160" cy="118" r="4" fill="#ffffff"/><circle cx="160" cy="118" r="1.6" fill="#111"/>
+            <!-- X/Y microphone pair -->
+            <g class="capR"><g transform="rotate(38 130 118)"><rect x="110" y="18" width="40" height="104" rx="20" fill="url(#gCap)"/><g class="grille"><rect x="112" y="20" width="36" height="40" rx="18" fill="url(#mesh)"/></g><rect x="110" y="60" width="40" height="5" fill="#0f0f10"/></g></g>
+            <g class="capL"><g transform="rotate(-38 130 118)"><rect x="110" y="18" width="40" height="104" rx="20" fill="url(#gCap)"/><g class="grille"><rect x="112" y="20" width="36" height="40" rx="18" fill="url(#mesh)"/></g><rect x="110" y="60" width="40" height="5" fill="#0f0f10"/></g></g>
+            <path d="M92 104h76l10 30H82z" fill="#202022"/>
+            <circle cx="130" cy="118" r="11" fill="#2c2c2f" stroke="#444" />
+            <!-- Body -->
+            <rect x="34" y="128" width="192" height="336" rx="40" fill="url(#gBody)"/>
+            <rect x="34.5" y="128.5" width="191" height="335" rx="39.5" fill="none" stroke="#4b4b50" stroke-opacity=".7"/>
+            <rect x="226" y="190" width="7" height="70" rx="3" fill="#1d1d20"/><g stroke="#3d3d42" stroke-width="1"><path d="M227 196h5M227 202h5M227 208h5M227 214h5M227 220h5M227 226h5M227 232h5M227 238h5M227 244h5M227 250h5"/></g>
+            <circle class="devled" cx="198" cy="148" r="3.6" fill="#3a1412"/>
+            <text x="198" y="160" fill="#6a6a70" font-size="5.5" text-anchor="middle" font-family="DM Mono,ui-monospace,monospace">REC</text>
+            <text x="62" y="151" fill="#6a6a70" font-size="6.5" letter-spacing="1.2" font-family="DM Mono,ui-monospace,monospace">FR-1 FIELD</text>
+            <!-- Screen -->
+            <rect x="54" y="164" width="152" height="118" rx="12" fill="#0a0a0b" stroke="#3a3a3e"/>
+            <rect class="lcd" x="60" y="170" width="140" height="106" rx="7" fill="#0b0f0d"/>
+            <g class="scr scr-idle" font-family="DM Mono,ui-monospace,monospace">
+              <text x="130" y="214" fill="#4f5a53" font-size="9" text-anchor="middle" letter-spacing="2">STANDBY</text>
+              <text x="130" y="232" fill="#3b443e" font-size="7" text-anchor="middle">TAP TO RECORD</text>
             </g>
-            <!-- Tape window -->
-            <rect x="66" y="128" width="188" height="50" rx="25" fill="#0a0a0a" stroke="#3a3a3c"/>
-            <rect x="120" y="140" width="80" height="26" rx="3" fill="#0f0f10" stroke="#2a2a2c"/>
-            <path class="tape" d="M104 172 Q112 162 124 160 H196 Q208 162 216 172" fill="none" stroke="#4a3426" stroke-width="2.4"/>
-            <g id="reelL">
-              <circle class="pack" id="packL" cx="104" cy="153" r="20" fill="url(#tape)"/>
-              <g class="hub"><circle cx="104" cy="153" r="9" fill="#e9e9ea"/><circle cx="104" cy="153" r="4.6" fill="#0a0a0a"/>
-                <g fill="#e9e9ea"><rect x="102.8" y="145.5" width="2.4" height="3.4" rx=".6"/><rect x="102.8" y="157.1" width="2.4" height="3.4" rx=".6"/><rect x="96.5" y="151.8" width="3.4" height="2.4" rx=".6"/><rect x="108.1" y="151.8" width="3.4" height="2.4" rx=".6"/></g></g>
+            <g class="scr scr-boot" font-family="Unbounded,DM Mono,sans-serif">
+              <text x="130" y="220" fill="#ddf240" font-size="13" font-weight="800" text-anchor="middle" letter-spacing=".5">NOISE MAP</text>
+              <rect x="88" y="232" width="84" height="3" rx="1.5" fill="#1d2a22"/><rect id="bootBar" x="88" y="232" width="84" height="3" rx="1.5" fill="#ddf240"/>
             </g>
-            <g id="reelR">
-              <circle class="pack" id="packR" cx="216" cy="153" r="20" fill="url(#tape)"/>
-              <g class="hub"><circle cx="216" cy="153" r="9" fill="#e9e9ea"/><circle cx="216" cy="153" r="4.6" fill="#0a0a0a"/>
-                <g fill="#e9e9ea"><rect x="214.8" y="145.5" width="2.4" height="3.4" rx=".6"/><rect x="214.8" y="157.1" width="2.4" height="3.4" rx=".6"/><rect x="208.5" y="151.8" width="3.4" height="2.4" rx=".6"/><rect x="220.1" y="151.8" width="3.4" height="2.4" rx=".6"/></g></g>
+            <g class="scr scr-live" font-family="DM Mono,ui-monospace,monospace">
+              <text x="68" y="184" fill="#8fa596" font-size="7" id="scrState">● STBY</text>
+              <text x="192" y="184" fill="#cfe5d6" font-size="7.5" text-anchor="end" id="scrTime">00:00</text>
+              <text x="68" y="218" fill="#f4f2e9" font-size="30" font-weight="500" id="faceNum" font-family="Unbounded,DM Mono,sans-serif" letter-spacing="-1">—</text>
+              <text x="192" y="204" fill="#8fa596" font-size="7" text-anchor="end" id="faceUnit">dB(A)</text>
+              <text x="192" y="216" fill="#ddf240" font-size="7.5" text-anchor="end" id="scrBand">READY</text>
+              <text x="61" y="234" fill="#5d6e62" font-size="5.5">L</text><text x="61" y="244" fill="#5d6e62" font-size="5.5">R</text>
+              <g id="mL"></g><g id="mR"></g>
+              <line id="scrLim" x1="0" x2="0" y1="226" y2="247" stroke="#ff4b3e" stroke-width="1" stroke-dasharray="1.5 1.5"/>
+              <g fill="#5d6e62" font-size="5" id="scrScale"></g>
+              <rect x="68" y="262" width="124" height="3" rx="1.5" fill="#1a2620"/><rect id="scrProg" x="68" y="262" width="0" height="3" rx="1.5" fill="#ddf240"/>
+              <text x="68" y="273" fill="#5d6e62" font-size="5.5" id="scrFile">NOISE_001.WAV</text><text x="192" y="273" fill="#5d6e62" font-size="5.5" text-anchor="end" id="scrLeq">LEQ --</text>
             </g>
-            <!-- Bottom guide -->
-            <path d="M58 206 L72 186 H248 L262 206" fill="#0e0e0f" stroke="#3a3a3c"/>
-            <g fill="#050505" stroke="#2c2c2e" stroke-width=".8"><circle cx="96" cy="196" r="3.4"/><circle cx="224" cy="196" r="3.4"/><rect x="138" y="191" width="8" height="9" rx="1.5"/><rect x="174" y="191" width="8" height="9" rx="1.5"/></g>
+            <rect x="60" y="170" width="140" height="106" rx="7" fill="url(#gGlass)" pointer-events="none"/>
+            <!-- REC key -->
+            <circle cx="130" cy="318" r="22" fill="#1b1b1d" stroke="#454549"/>
+            <circle class="recring" cx="130" cy="318" r="16" fill="#2a2a2d" stroke="#5a2420" stroke-width="2"/>
+            <circle class="recdot" cx="130" cy="318" r="8" fill="#6b1a16"/>
+            <!-- Transport keys -->
+            <g class="tkey" id="kRew"><rect x="52" y="352" width="36" height="22" rx="7" fill="#2f2f33"/><path d="M73 357v12l-7-6zM80 357v12l-7-6z" fill="#9a9aa0"/></g>
+            <g class="tkey" id="kStop"><rect x="92" y="352" width="36" height="22" rx="7" fill="#2f2f33"/><rect x="105" y="358" width="10" height="10" rx="1.5" fill="#9a9aa0"/></g>
+            <g class="tkey" id="kPlay"><rect x="132" y="352" width="36" height="22" rx="7" fill="#2f2f33"/><path d="M146 357v12l9-6z" fill="#9a9aa0"/></g>
+            <g class="tkey" id="kFwd"><rect x="172" y="352" width="36" height="22" rx="7" fill="#2f2f33"/><path d="M180 357v12l7-6zM187 357v12l7-6z" fill="#9a9aa0"/></g>
+            <!-- Speaker grille -->
+            <rect x="74" y="392" width="112" height="46" rx="12" fill="#232326"/>
+            <rect x="78" y="396" width="104" height="38" rx="10" fill="url(#spk)"/>
           </svg>
-        </button>
-        <svg class="deckfront" viewBox="0 0 400 392" aria-hidden="true">
-          <defs>
-            <linearGradient id="alu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f4f6"/><stop offset=".5" stop-color="#e2e2e6"/><stop offset="1" stop-color="#cfcfd4"/></linearGradient>
-            <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".35" stop-color="#fff" stop-opacity=".06"/><stop offset=".36" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#9ab" stop-opacity=".08"/></linearGradient>
-            <linearGradient id="keyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fafafa"/><stop offset="1" stop-color="#dcdce0"/></linearGradient>
-          </defs>
-          <path fill="url(#alu)" fill-rule="evenodd" d="M30 70H370A30 30 0 0 1 400 100V362A30 30 0 0 1 370 392H30A30 30 0 0 1 0 362V100A30 30 0 0 1 30 70Z M44 84H356A16 16 0 0 1 372 100V290A16 16 0 0 1 356 306H44A16 16 0 0 1 28 290V100A16 16 0 0 1 44 84Z"/>
-          <path d="M30 70.5H370" stroke="#fff" stroke-width="1"/>
-          <path d="M44 84.5H356A15.5 15.5 0 0 1 371.5 100V290A15.5 15.5 0 0 1 356 305.5H44A15.5 15.5 0 0 1 28.5 290V100A15.5 15.5 0 0 1 44 84.5Z" fill="none" stroke="#a9a9ae"/>
-          <rect class="door" x="28" y="84" width="344" height="222" rx="16" fill="url(#glass)" stroke="#ffffff" stroke-opacity=".35"/>
-          <text x="34" y="80" fill="#8e8e93" font-size="7" font-family="ui-monospace,Menlo,monospace" letter-spacing="1">NOISE MAP · TC-1</text>
-          <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
-            <g class="key" id="kRec"><rect class="kface" x="44" y="320" width="62" height="34" rx="9" fill="url(#keyg)" stroke="#b5b5ba"/><circle cx="75" cy="337" r="5.5" fill="#ff3b30"/></g>
-            <g class="key" id="kPlay"><rect class="kface" x="114" y="320" width="62" height="34" rx="9" fill="url(#keyg)" stroke="#b5b5ba"/><path d="M140 331v12l10-6z" fill="#3a3a3c"/></g>
-            <g class="key" id="kStop"><rect class="kface" x="184" y="320" width="62" height="34" rx="9" fill="url(#keyg)" stroke="#b5b5ba"/><rect x="209" y="331" width="12" height="12" rx="1.5" fill="#3a3a3c"/></g>
-            <g class="key" id="kEject"><rect class="kface" x="254" y="320" width="62" height="34" rx="9" fill="url(#keyg)" stroke="#b5b5ba"/><path d="M285 330l-7 8h14zM278 341h14v2.6h-14z" fill="#3a3a3c"/></g>
-            <circle class="deckled" cx="344" cy="331" r="4" fill="#5a2a28"/>
-            <text x="344" y="349" fill="#8e8e93" font-size="7" text-anchor="middle" font-family="ui-monospace,Menlo,monospace">REC</text>
-          </g>
-        </svg>
+          </button>
         </div>
       </div>
       <div class="ctl">
@@ -581,7 +572,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--lime)}
         <button class="arrowbtn dark" type="button" data-go="tag">Tag it<span class="ar"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9 9 3M4 3h5v5"/></svg></span></button>
         <div class="rating"><b><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5 10 6l4.8.4-3.6 3.2 1.1 4.8L8 12 3.7 14.4l1.1-4.8L1.2 6.4 6 6Z"/></svg><span id="miniVerdict">--</span></b><span id="miniVerdictSub">vs. legal limit</span></div>
       </div>
-      <p class="hint" id="micMsg">Tap the cassette or the record button. Stand where residents live and record 30–60 seconds.</p>
+      <p class="hint" id="micMsg">Tap the recorder or the record button. Stand where residents live and record 30–60 seconds.</p>
 
       <div class="sect"><h2><span class="dot"></span><span class="n">02</span>Highlights</h2><span id="wLabel">A-weighted</span></div>
       <div class="tiles">
@@ -838,30 +829,30 @@ const fmtDist=m=>m<1000?Math.round(m/10)*10+" m":(m/1000).toFixed(1)+" km";
 function updateWLabel(){const a=settings.weighting==="A";$("wLabel").textContent=a?"A-weighted":"Unweighted (Z)";$("liveUnit").textContent=a?"dB(A)":"dB(Z)";$("faceUnit").textContent=a?"dB(A)":"dB(Z)"}
 updateWLabel();
 
-/* ---------- Cassette dial ---------- */
-const DMIN=30,DMAX=110,AMAX=56,CX=160,CY=118;
-const angFor=db=>(-AMAX+Math.min(1,Math.max(0,(db-DMIN)/(DMAX-DMIN)))*AMAX*2);
-function buildFace(){
-  const g=$("ticks"),ns="http://www.w3.org/2000/svg",lim=limitFor(Date.now());g.innerHTML="";
-  for(let db=DMIN;db<=DMAX;db+=2){
-    const a=angFor(db)*Math.PI/180,major=db%10===0,r1=major?78:82,r2=88;
-    const ln=document.createElementNS(ns,"line");
-    ln.setAttribute("x1",(CX+Math.sin(a)*r1).toFixed(2));ln.setAttribute("y1",(CY-Math.cos(a)*r1).toFixed(2));
-    ln.setAttribute("x2",(CX+Math.sin(a)*r2).toFixed(2));ln.setAttribute("y2",(CY-Math.cos(a)*r2).toFixed(2));
-    ln.setAttribute("stroke",db>=lim?"#ff453a":"#f2f2f2");ln.setAttribute("stroke-width",major?"1.8":".8");ln.setAttribute("stroke-linecap","round");g.appendChild(ln);
-    if(major){const t=document.createElementNS(ns,"text");t.setAttribute("x",(CX+Math.sin(a)*68).toFixed(2));t.setAttribute("y",(CY-Math.cos(a)*68+3).toFixed(2));
-      t.setAttribute("text-anchor","middle");t.setAttribute("font-size","7.5");t.setAttribute("fill",db>=lim?"#ff6961":"#9a9aa0");
-      t.setAttribute("font-family","-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif");t.textContent=db;g.appendChild(t)}
-  }
-  const la=angFor(lim)*Math.PI/180,tri=document.createElementNS(ns,"path"),tx=CX+Math.sin(la)*92,ty=CY-Math.cos(la)*92;
-  tri.setAttribute("d",`M${tx} ${ty} l-3.2 -5 h6.4 Z`);tri.setAttribute("fill","#ff453a");tri.setAttribute("transform",`rotate(${angFor(lim)} ${tx} ${ty})`);g.appendChild(tri);
+/* ---------- Recorder screen ----------
+   Two segmented meters (L/R, same mono signal) on a 30–110 dB scale with peak hold and a red line at the limit. */
+const SMIN=30,SMAX=110,SX0=68,SX1=192,SEGN=30;
+const sx=db=>SX0+(Math.min(SMAX,Math.max(SMIN,db))-SMIN)/(SMAX-SMIN)*(SX1-SX0);
+function mkMeter(id,y){const g=$(id),ns="http://www.w3.org/2000/svg",w=(SX1-SX0)/SEGN,segs=[];
+  for(let i=0;i<SEGN;i++){const r=document.createElementNS(ns,"rect");r.setAttribute("x",(SX0+i*w+.4).toFixed(2));r.setAttribute("y",y);r.setAttribute("width",(w-.8).toFixed(2));r.setAttribute("height","7");r.setAttribute("rx","1");r.setAttribute("class","mseg");r.setAttribute("fill","#1a2620");g.appendChild(r);segs.push({el:r,lvl:SMIN+(i+.5)*(SMAX-SMIN)/SEGN,on:null})}
+  return segs}
+const segL=mkMeter("mL",228),segR=mkMeter("mR",238);
+(function(){const g=$("scrScale"),ns="http://www.w3.org/2000/svg";for(let v=30;v<=110;v+=20){const t=document.createElementNS(ns,"text");t.setAttribute("x",sx(v));t.setAttribute("y","254");t.setAttribute("text-anchor","middle");t.textContent=v;g.appendChild(t)}})();
+function fillMeter(segs,lvl,pk){
+  segs.forEach(s=>{const on=lvl!=null&&s.lvl<=lvl,isPk=pk!=null&&Math.abs(s.lvl-pk)<(SMAX-SMIN)/SEGN/2;
+    const f=isPk?"#f4f2e9":on?bandOf(s.lvl).hex:"#1a2620";if(f!==s.on){s.on=f;s.el.setAttribute("fill",f)}})}
+let pkL=null,pkT=0;
+function drawScreen(lvl){
+  const now=performance.now();
+  if(lvl==null){pkL=null}else if(pkL==null||lvl>=pkL){pkL=lvl;pkT=now}else if(now-pkT>1500){pkL=Math.max(lvl,pkL-2)}
+  fillMeter(segL,lvl,pkL);fillMeter(segR,lvl==null?null:lvl-.6,pkL);
+  const g=document.querySelectorAll(".grille"),sc=lvl==null?1:1+Math.min(.06,Math.max(0,(lvl-45)/700));g.forEach(e=>e.style.transform=`scale(${sc.toFixed(3)})`);
 }
-function setNeedle(el,db){el.style.transform=`rotate(${angFor(db==null?DMIN:db)}deg)`}
-setNeedle($("needle"),null);
-function placeLimit(){const lim=limitFor(Date.now());$("limitPill").textContent=`Limit ${lim} dB · ${isDay(Date.now())?"day":"night"}`;buildFace()}
+drawScreen(null);
+function placeLimit(){const lim=limitFor(Date.now());$("limitPill").textContent=`Limit ${lim} dB · ${isDay(Date.now())?"day":"night"}`;const x=sx(lim);$("scrLim").setAttribute("x1",x);$("scrLim").setAttribute("x2",x)}
 placeLimit();
-function setReels(p){$("packL").style.transform=`scale(${0.55+0.45*(1-p)})`;$("packR").style.transform=`scale(${0.55+0.45*p})`}
-setReels(0);
+function setProgress(p,d,s){$("scrProg").setAttribute("width",(124*p).toFixed(1));$("scrTime").textContent=String(Math.floor(d/60)).padStart(2,"0")+":"+String(Math.floor(d%60)).padStart(2,"0");$("scrLeq").textContent="LEQ "+(s?s.leq.toFixed(1):"--")}
+$("scrFile").textContent="NOISE_"+String(readings.length+1).padStart(3,"0")+".WAV";
 
 /* ---------- Audio ---------- */
 let ctx=null,stream=null,analyser=null,timeBuf,freqBuf,aw=null,timer=null,wakeLock=null;
@@ -889,7 +880,7 @@ function stopMic(){
   if(ctx) ctx.close();ctx=null;stream=null;
   try{wakeLock&&wakeLock.release()}catch(e){} wakeLock=null;
   disp=null;
-  $("live").textContent="—";$("stLive").textContent="—";$("faceNum").textContent="—";setNeedle($("needle"),null);
+  $("live").textContent="—";$("stLive").textContent="—";$("faceNum").textContent="—";drawScreen(null);
   $("bandPill").textContent=samples.length?"Paused":"Ready";document.querySelector(".t-live").style.removeProperty("--bc");
   updateInfo();
 }
@@ -906,13 +897,13 @@ function tick(){
   lvl=Math.max(0,lvl);
   if(recording) samples.push(lvl);
   disp=(disp==null||lvl>=disp)?lvl:Math.max(lvl,disp-3);
-  setNeedle($("needle"),disp);
+  drawScreen(disp);
   const t=disp.toFixed(0);$("live").textContent=t;$("stLive").textContent=t+" dB";$("faceNum").textContent=t;
   liveHist.push(disp);if(liveHist.length>120)liveHist.shift();
   const b=bandOf(disp);
   hero.style.setProperty("--rc",b.v?`var(${b.v})`:"#ff3b30");
   hero.style.setProperty("--ro",Math.min(.75,Math.max(.12,(disp-40)/55)).toFixed(2));
-  $("bandPill").textContent=b.name;document.querySelector(".t-live").style.setProperty("--bc",b.v?`var(${b.v})`:"");
+  $("bandPill").textContent=b.name;$("scrBand").textContent=b.name.toUpperCase();$("scrBand").setAttribute("fill",b.hex);document.querySelector(".t-live").style.setProperty("--bc",b.v?`var(${b.v})`:"");
   drawSpark();updateStats();
   if(samples.length%8===0)updateInfo();
 }
@@ -959,8 +950,7 @@ function updateStats(){
   $("stTime").textContent=mmss(d);$("sDur").textContent=mmss(d);
   $("ringFill").style.strokeDashoffset=(207.35*(1-p)).toFixed(1);
   $("pct").textContent=Math.round(p*100)+"%";
-  setReels(p);drawPeaks();drawVerdict(s);
-  const n2=$("needle2");if(s){n2.setAttribute("opacity","1");setNeedle(n2,s.leq)}else{n2.setAttribute("opacity","0")}
+  setProgress(p,d,s);drawPeaks();drawVerdict(s);
   $("btnReset").disabled=!samples.length||recording;
 }
 function setStatus(){
@@ -968,18 +958,19 @@ function setStatus(){
   sp.className="pill "+(recording?"red rec":samples.length?"sky":"lime");
   $("statusTxt").textContent=recording?"Recording":samples.length?`Paused · ${mmss(d)}`:"Ready";
   hero.classList.toggle("recording",recording);document.body.classList.toggle("is-rec",recording);
-  $("faceState").textContent=recording?"● REC":samples.length?"PAUSED":"READY";$("faceState").setAttribute("fill",recording?"#ff453a":"#6d6d72");
+  $("scrState").textContent=recording?"● REC":samples.length?"❚❚ PAUSE":"● STBY";$("scrState").setAttribute("fill",recording?"#ff4b3e":"#8fa596");
+  $("scrBand").textContent=recording?bandOf(disp).name.toUpperCase():samples.length?"TAG IT →":"READY";
   $("btnRec").setAttribute("aria-label",recording?"Stop recording":"Start recording");
   $("deck").setAttribute("aria-label",recording?"Stop recording":"Tap to record");
 }
-/* Insert → record, stop → eject */
+/* Boot → record, stop → standby */
 const wait=ms=>new Promise(r=>setTimeout(r,reduceMotion?0:ms));
 let busy=false;
-function keys(down){["kRec","kPlay","kStop","kEject"].forEach(k=>$(k).classList.toggle("down",down.includes(k)))}
-async function eject(){
-  keys(["kStop"]);hero.classList.remove("closed");await wait(160);
-  keys(["kEject"]);hero.classList.add("ejecting");hero.classList.remove("loaded");
-  await wait(520);hero.classList.remove("ejecting");keys([]);
+function keys(down){["kRew","kStop","kPlay","kFwd"].forEach(k=>$(k).classList.toggle("down",down.includes(k)))}
+async function standby(){
+  keys(["kStop"]);await wait(220);keys([]);
+  $("scrBand").setAttribute("fill","#ddf240");
+  await wait(900);hero.classList.remove("on");
 }
 async function toggleRecord(){
   if(busy) return;busy=true;
@@ -987,22 +978,23 @@ async function toggleRecord(){
     recording=false;stopMic();updateStats();setStatus();
     const enough=samples.length*0.125>=5;
     $("micMsg").className="hint";$("micMsg").textContent=enough?"Stopped. Tag it next, or tap to keep recording.":"That was short. Tap to keep recording.";
-    await eject();busy=false;
-    if(enough){toast("Recording stopped · now tag it");setTimeout(()=>go("tag"),reduceMotion?0:450)}
+    await standby();busy=false;
+    if(enough){toast("Recording stopped · now tag it");setTimeout(()=>go("tag"),reduceMotion?0:300)}
     return;
   }
   if(view!=="rec")go("rec");
-  $("statusTxt").textContent="Loading tape…";
-  hero.classList.add("loaded");
-  const [ok]=await Promise.all([ctx?Promise.resolve(true):startMic(),wait(560)]);
-  if(!ok){await eject();setStatus();busy=false;return}
-  hero.classList.add("closed");await wait(200);
-  keys(["kRec","kPlay"]);
+  $("statusTxt").textContent="Starting…";
+  const wasOn=hero.classList.contains("on");
+  if(!wasOn){hero.classList.add("booting");$("bootBar").setAttribute("width","0");requestAnimationFrame(()=>{$("bootBar").style.transition=reduceMotion?"none":"width 600ms var(--ease-out)";$("bootBar").setAttribute("width","84")})}
+  const [ok]=await Promise.all([ctx?Promise.resolve(true):startMic(),wait(wasOn?0:650)]);
+  hero.classList.remove("booting");
+  if(!ok){hero.classList.remove("on");setStatus();busy=false;return}
+  hero.classList.add("on");keys(["kPlay"]);
   if(!samples.length) recStart=Date.now();
   recording=true;setStatus();busy=false;updateInfo();
-  $("micMsg").className="hint";$("micMsg").textContent="Recording. Point the phone toward the source and hold still for 30–60 seconds.";
+  $("micMsg").className="hint";$("micMsg").textContent="Recording. Point the microphones toward the source and hold still for 30–60 seconds.";
 }
-function resetSession(){samples=[];liveHist=[];drawSpark();updateStats();setStatus();$("micMsg").className="hint";$("micMsg").textContent="Cleared. Tap the cassette to record again.";toast("Recording cleared")}
+function resetSession(){samples=[];liveHist=[];drawSpark();updateStats();setStatus();$("micMsg").className="hint";$("micMsg").textContent="Cleared. Tap the recorder to record again.";toast("Recording cleared")}
 $("btnRec").addEventListener("click",toggleRecord);
 $("deck").addEventListener("click",toggleRecord);
 $("btnReset").addEventListener("click",resetSession);
@@ -1150,7 +1142,7 @@ function selectSource(key,fromList){
   g.rs.forEach(r=>{const l=limitFor(r.ts),el=document.createElement("div");el.className="item";
     el.innerHTML=`<span class="thumb" style="background:var(${bandOf(r.leq).v})">${Math.round(r.leq)}</span><span class="t"><b>${esc(clean(r.place))}</b><small>${when(r.ts)}${r.distance?` · ${r.distance} m away`:""}</small></span><span class="v ${r.leq>l?"over":""}">${r.leq>l?"+"+(r.leq-l).toFixed(1):"OK"}</span>`;
     vl.appendChild(el)});
-  $("srcRecord").onclick=()=>{manualPick=true;setPick(g.lat,g.lng,null,"map");$("place").value=clean(g.rs[0].place).replace(/,.*$/,"");$("category").value=g.cat;go("rec");toast("Location set to "+g.name+" · tap the cassette")};
+  $("srcRecord").onclick=()=>{manualPick=true;setPick(g.lat,g.lng,null,"map");$("place").value=clean(g.rs[0].place).replace(/,.*$/,"");$("category").value=g.cat;go("rec");toast("Location set to "+g.name+" · tap the recorder")};
   $("srcMap").onclick=()=>{if(isPhone())go("map");else map.setView([g.lat,g.lng],17)};
   if(isPhone()&&!fromList&&document.body.classList.contains("mapmode")){toast(g.name+" · "+fmt1(g.avg)+" dB");setTimeout(()=>go("src"),reduceMotion?0:350)}else go("src");
 }
@@ -1209,7 +1201,7 @@ function renderLists(){
   $("sumCount").textContent=gs.length?`${gs.length} sources`:"";
   const rl=$("readList");rl.innerHTML="";
   const shown=showAllRows?list:list.slice(0,8);
-  if(!list.length) rl.innerHTML='<p class="empty">No readings yet. Tap the cassette to make one.</p>';
+  if(!list.length) rl.innerHTML='<p class="empty">No readings yet. Tap the recorder to make one.</p>';
   shown.forEach(r=>{
     const lim=limitFor(r.ts),el=document.createElement("div");el.className="item";el.tabIndex=0;el.setAttribute("role","button");
     el.innerHTML=`<span class="thumb" style="background:var(${bandOf(r.leq).v})">${Math.round(r.leq)}</span><span class="t"><b>${esc(clean(r.place))}${r.example?'<span class="tag">Example</span>':""}</b><small>${when(r.ts)}${r.distance?` · ${r.distance} m`:""}</small></span>
@@ -1236,18 +1228,18 @@ $("form").addEventListener("submit",async e=>{
   e.preventDefault();
   const m=$("saveMsg");m.className="msg err";
   const s=sessionStats();
-  if(!s||s.dur<5){m.textContent="Record at least a few seconds first: go to Record and tap the cassette.";return}
+  if(!s||s.dur<5){m.textContent="Record at least a few seconds first: go to Record and tap the recorder.";return}
   if(!$("place").value.trim()){m.textContent="Name the source first.";$("place").focus();return}
   if(!pick){m.textContent=watchId!=null?"Still finding your location. Wait a moment, or use Pick on map.":"Set a location: tap GPS or Pick on map.";return}
-  if(recording){recording=false;stopMic();setStatus();eject()}
+  if(recording){recording=false;stopMic();setStatus();standby()}
   const r={id:uid(),place:$("place").value.trim(),category:$("category").value,lat:pick.lat,lng:pick.lng,acc:pick.acc,
     leq:+s.leq.toFixed(1),lmax:+s.lmax.toFixed(1),l90:+s.l90.toFixed(1),dur:Math.round(s.dur),weighting:settings.weighting,
     offset:settings.offset,distance:$("distance").value?+$("distance").value:null,notes:$("notes").value.trim(),ts:recStart||Date.now()};
   readings.push(r);store.set(KEY,readings);
   samples=[];liveHist=[];drawSpark();updateStats();setStatus();$("notes").value="";
   m.className="msg good";m.textContent="";manualPick=false;
-  $("micMsg").className="hint";$("micMsg").textContent="Saved. Tap the cassette to record the next one.";
-  renderAll(false);toast(`Saved · ${r.leq} dB · it's on the map`);
+  $("micMsg").className="hint";$("micMsg").textContent="Saved. Tap the recorder to record the next one.";
+  renderAll(false);toast(`Saved · ${r.leq} dB · it's on the map`);$("scrFile").textContent="NOISE_"+String(readings.length+1).padStart(3,"0")+".WAV";
   selectSource(srcKey(r),true);
 });
 
