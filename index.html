@@ -241,6 +241,32 @@ textarea{resize:vertical;min-height:70px}
 .dial{width:min(100%,300px);margin:0 auto;display:block;overflow:visible}
 .dial text{font-family:var(--sans)}
 
+/* Did you know? */
+.facts{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(250px,300px);gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:thin;scroll-behavior:smooth}
+.fact{scroll-snap-align:start;background:var(--panel);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:270px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);position:relative;overflow:hidden}
+.fact::before{content:"";position:absolute;inset:0;background:var(--topo,none) center/700px auto;opacity:.6;pointer-events:none}
+.fact>*{position:relative}
+.fact .ft{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.fact .ftag{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border-radius:999px;background:var(--lime);color:#0b0b0a}
+.fact .ftag.law{background:var(--sand);color:#1a1408}
+.fact .ftag.sci{background:var(--olive);color:var(--cream)}
+.fact .ftag.you{background:var(--cream);color:#0b0b0a}
+.fact .fn{font:500 10.5px var(--mono);color:var(--muted)}
+.fact .big{font:800 clamp(30px,5vw,38px)/1 var(--display);letter-spacing:-.03em;color:var(--lime)}
+.fact .big small{font:700 14px var(--display);color:var(--cream);margin-left:4px;letter-spacing:0}
+.fact p{font-size:13.5px;line-height:1.45;color:var(--ink-2)}
+.fact .why{margin-top:auto;border-top:1px solid #2a2a26;padding-top:10px}
+.fact .why b{display:block;font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--lime);margin-bottom:3px}
+.fact .why span{font-size:12.5px;color:var(--cream);line-height:1.4}
+.fact a.src{font:400 11px var(--mono);color:var(--muted);text-decoration:underline;text-underline-offset:2px;align-self:flex-start}
+.fact a.src:hover{color:var(--lime)}
+.factnav{display:flex;gap:6px}
+.factnav button{width:34px;height:34px;border-radius:50%;border:0;background:var(--panel);color:var(--lime);font-size:15px;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.factnav button:active{transform:scale(.94)}
+.factnote{font-size:11.5px;color:var(--muted)}
+.vtip{font-size:12.5px;color:var(--cream);background:rgba(255,255,255,.06);border-radius:12px;padding:9px 11px;margin-top:4px;line-height:1.4}
+.vtip b{color:var(--lime);font-weight:600}
+
 /* Map side */
 .mapside{position:relative;min-width:0;padding:12px 12px 12px 0}
 .mapbox{position:relative;height:100%;border-radius:28px;overflow:hidden;background:#ece9e2}
@@ -568,8 +594,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--lime)}
           <div class="vtitle" id="vTitle">Record to see how loud it is</div>
           <p id="vText">We compare your average with Ghana's legal limit for this time of day.</p>
           <div class="gtrack"><i class="gfill" id="gFill"></i><i class="glim" id="gLim" data-l="55"></i></div><div class="gscale"><span>30 dB</span><span>110 dB</span></div>
+          <p class="vtip" id="vTip" hidden></p>
         </div>
       </div>
+
+      <div class="sect"><h2><span class="dot"></span><span class="n">03</span>Did you know?</h2><span class="factnav"><button type="button" id="factPrev" aria-label="Previous fact">←</button><button type="button" id="factNext" aria-label="Next fact">→</button></span></div>
+      <div class="facts" id="facts" role="list"></div>
+      <p class="factnote">Health guidance comes from WHO and NIOSH; limits from Ghana EPA / Ghana Standards Authority. Phone readings are indicative, not legal measurements.</p>
     </section>
 
     <!-- Source detail -->
@@ -916,12 +947,56 @@ function drawPeaks(){
     el.style.setProperty("--h",v==null?"6%":Math.max(6,Math.min(100,(v-30)/80*100)).toFixed(0)+"%");el.classList.toggle("top",v!=null&&v===top&&top>0)});
 }
 function verdictOf(leq,ts){const lim=limitFor(ts),diff=leq-lim,x=Math.pow(2,diff/10);return {lim,diff,x,when:isDay(ts)?"day":"night"}}
+/* ---------- Did you know? (sourced) ---------- */
+const FACTS=[
+  {tag:"Health",big:"85",unit:"dB",text:"Sound averaging 85 dB(A) over 8 hours can damage hearing. Every extra 3 dB halves the safe time: at 100 dB it is just 15 minutes.",
+   why:"If your Max or average near a speaker is in the 80s or higher, people close by are risking hearing damage, not just annoyance.",src:"NIOSH / CDC",url:"https://blogs.cdc.gov/niosh-science-blog/2016/02/08/noise/"},
+  {tag:"Health",big:"1 bn+",unit:"",text:"WHO says over 1 billion people aged 12–35 risk losing their hearing from loud music and other recreational sound. That hearing loss is permanent, but preventable.",
+   why:"Loud services, events and clubs reach children and young people. Your readings show where turning the volume down would protect them.",src:"WHO / PAHO, 2022",url:"https://www.paho.org/en/news/2-3-2022-who-releases-new-standard-tackle-rising-threat-hearing-loss"},
+  {tag:"Health",big:"30",unit:"dB",text:"For good sleep, WHO guidance is about 30 dB inside bedrooms, and 45 dB outside at night so people can sleep with windows open.",
+   why:"Night vigils and late events above 48 dB outside homes break Ghana's night limit and cut into neighbours' sleep. Record at night too.",src:"WHO Guidelines for Community Noise",url:"https://www.nonoise.org/library/whonoise/whonoise.htm"},
+  {tag:"Health",big:"1 m+",unit:"years",text:"Traffic noise alone costs over 1 million healthy years of life every year in western Europe, through sleep disturbance, annoyance and heart disease.",
+   why:"Noise is a public health issue, not just a nuisance. Data like yours helps make that case to the people who can act.",src:"WHO Europe, 2011",url:"https://www.who.int/europe/news/item/30-03-2011-new-evidence-from-who-on-health-effects-of-traffic-related-noise-in-europe"},
+  {tag:"Health",big:"55",unit:"dB",text:"WHO guidance: keep daytime noise in outdoor living areas below 55 dB to protect most people from serious annoyance (50 dB for moderate annoyance).",
+   why:"55 dB is also Ghana's residential day limit, so a reading above it is both a health concern and a breach.",src:"WHO Guidelines for Community Noise",url:"https://www.nonoise.org/library/whonoise/whonoise.htm"},
+  {tag:"Ghana law",cls:"law",big:"55 / 48",unit:"dB",text:"Ghana's permissible ambient noise in residential areas is 55 dB(A) by day (6am–10pm) and 48 dB(A) at night. Commercial areas allow 75 / 65.",
+   why:"These are the limits this app checks every reading against. Switch the area type in Settings for schools, mixed use or commercial zones.",src:"Ghana News Agency / EPA",url:"https://gna.org.gh/2023/04/noise-pollution-is-a-public-health-problem-epa-director/"},
+  {tag:"Ghana law",cls:"law",big:"GS 1222",unit:"",text:"Ghana's Standard for Health Protection: Requirements for Ambient Noise Control (GS 1222:2018) sets limits by zone. EPA has asked religious bodies and entertainment centres to comply, especially early morning and late night.",
+   why:"Name the standard when you share your readings with the EPA or your assembly. Dated, located readings make a complaint concrete.",src:"Ghanaian Times, 2025",url:"https://ghanaiantimes.com.gh/epa-asks-religious-bodies-entertainment-centres-to-comply-with-prescribed-noise-limits/"},
+  {tag:"Science",cls:"sci",big:"+10",unit:"dB",text:"Every 10 dB rise sounds roughly twice as loud, and every 3 dB doubles the sound energy. So 75 dB sounds about 4× as loud as 55 dB.",
+   why:"Small-looking differences matter. That's why the verdict tile translates dB into 'times as loud as allowed'.",src:"",url:""},
+  {tag:"Science",cls:"sci",big:"Leq",unit:"",text:"Leq is the energy average over your recording; it's how limits are written. L90 is the level exceeded 90% of the time: the background between bursts.",
+   why:"Record 30–60 seconds so Leq reflects the real noise, and compare a source's L90 with a quiet street to see how much it adds.",src:"",url:""}
+];
+let factIdx=0;
+function renderFacts(){
+  const all=visible(),over=all.filter(r=>r.leq>limitFor(r.ts)).length,real=readings.length;
+  const gs=groupsOf(all).sort((a,b)=>b.avg-a.avg),top=gs[0];
+  const you={tag:"Your survey",cls:"you",big:all.length?Math.round(over/all.length*100)+"%":"0",unit:all.length?"over":"",
+    text:all.length?`${over} of ${all.length} ${real?"":"example "}readings break the legal limit.${top?` Loudest so far: ${top.name} at ${fmt1(top.avg)} dB.`:""}`:"No readings yet. Record your first one with the meter above.",
+    why:real?"Repeat readings at different days and times. Patterns across many visits are stronger evidence than any single complaint.":"Example data is shown until you save your own. Your readings replace it automatically.",src:"",url:""};
+  const list=[you,...FACTS],wrap=$("facts");
+  wrap.innerHTML=list.map((f,i)=>`<article class="fact" role="listitem"><div class="ft"><span class="ftag ${f.cls||""}">${esc(f.tag)}</span><span class="fn">${String(i+1).padStart(2,"0")}/${String(list.length).padStart(2,"0")}</span></div>
+    <div class="big">${esc(f.big)}${f.unit?`<small>${esc(f.unit)}</small>`:""}</div><p>${esc(f.text)}</p>
+    <div class="why"><b>Why it matters</b><span>${esc(f.why)}</span></div>${f.url?`<a class="src" href="${f.url}" target="_blank" rel="noopener">Source: ${esc(f.src)}</a>`:""}</article>`).join("");
+}
+function stepFacts(dir){const w=$("facts"),c=w.querySelector(".fact");if(!c)return;const step=c.getBoundingClientRect().width+12;w.scrollBy({left:dir*step,behavior:reduceMotion?"auto":"smooth"})}
+$("factPrev").addEventListener("click",()=>stepFacts(-1));$("factNext").addEventListener("click",()=>stepFacts(1));
+function tipFor(s,v){
+  if(!s||s.dur<2)return "";
+  if(s.lmax>=85||s.leq>=85)return "<b>Did you know?</b> Around 85 dB and above, long exposure can damage hearing. At 100 dB the safe time is about 15 minutes (NIOSH).";
+  if(v.when==="night"&&v.diff>0)return "<b>Did you know?</b> WHO guidance for sleep is about 45 dB outside at night so people can sleep with windows open.";
+  if(v.diff>=10)return `<b>Did you know?</b> Every 10 dB sounds about twice as loud, so +${v.diff.toFixed(0)} dB is a big difference for neighbours.`;
+  if(v.diff>0)return "<b>Did you know?</b> WHO links daytime noise above 55 dB outdoors with serious annoyance for most people.";
+  return "<b>Did you know?</b> Readings within the limit matter too: they show which streets and times are quiet.";
+}
+
 function drawVerdict(s){
   const el=$("verdict"),t0=recStart||Date.now(),lim=limitFor(t0),wh=isDay(t0)?"day":"night";
   $("gLim").style.left=((lim-30)/80*100)+"%";$("gLim").dataset.l=lim+" limit";
   if(!s||s.dur<2){el.className="tile t-verdict wide";$("vTitle").textContent="Record to see how loud it is";
     $("vText").textContent=`We compare your average with the ${lim} dB ${wh} limit.`;$("gFill").style.width="0";
-    $("miniVerdict").textContent="--";$("miniVerdictSub").textContent="vs. legal limit";return}
+    $("miniVerdict").textContent="--";$("miniVerdictSub").textContent="vs. legal limit";$("vTip").hidden=true;return}
   const v=verdictOf(s.leq,t0);$("gFill").style.width=Math.max(2,Math.min(100,(s.leq-30)/80*100))+"%";
   if(v.diff>0){el.className="tile t-verdict wide bad";$("vTitle").textContent=`+${v.diff.toFixed(1)} dB over the limit`;
     $("vText").textContent=`Sounds about ${v.x<1.95?v.x.toFixed(1):Math.round(v.x)}× as loud as the ${lim} dB ${wh} limit allows.`;
@@ -929,6 +1004,7 @@ function drawVerdict(s){
   else{el.className="tile t-verdict wide good";$("vTitle").textContent="Within the limit";
     $("vText").textContent=`${Math.abs(v.diff).toFixed(1)} dB under the ${lim} dB ${wh} limit.`;
     $("miniVerdict").textContent=v.diff.toFixed(1);$("miniVerdictSub").textContent="dB under limit"}
+  const tip=tipFor(s,v),vt=$("vTip");if(tip){if(vt.dataset.t!==tip){vt.innerHTML=tip;vt.dataset.t=tip}vt.hidden=false}else vt.hidden=true;
 }
 function updateStats(){
   const s=sessionStats(),d=s?s.dur:0,p=Math.min(1,d/TARGET);
@@ -1195,7 +1271,7 @@ function renderLists(){
   $("exampleNotice").hidden=!(all.length&&all[0].example);
   $("railBadge").hidden=!readings.length;$("railBadge").textContent=readings.length;
 }
-function renderAll(fit){drawMap(fit);renderLists();drawChart();updateInfo()}
+function renderAll(fit){drawMap(fit);renderLists();drawChart();updateInfo();renderFacts()}
 $("btnHideEx").addEventListener("click",()=>{settings.hideEx=true;saveSettings();renderAll(false)});
 $("btnEdit").addEventListener("click",()=>{editMode=!editMode;renderLists()});
 $("btnMore").addEventListener("click",()=>{showAllRows=!showAllRows;renderLists()});
