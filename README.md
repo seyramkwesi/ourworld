@@ -2,13 +2,13 @@
 
 A citizen science app: a phone-based sound level meter that maps noise in a community. Surveyors record a reading, tag the source (church, mosque, event, traffic and so on) and its location, and each reading appears on a shared map coloured by loudness and checked against Ghana EPA noise limits.
 
-The interface is a dashboard: an FR-1 field recorder in the centre and a live map on the right, with an icon rail (a bottom tab bar on phones) for Recorder, Tag, Readings and Settings.
+The interface is a dashboard: a radial gain meter in the centre and a live map on the right, with an icon rail (a bottom tab bar on phones) for Recorder, Tag, Readings and Settings.
 
 It runs entirely in the browser. There is no server, no account and no build step.
 
 ## Features
 
-- **Field recorder**: an original handheld recorder with X/Y microphones. Tap it (or the record button): the screen boots, the REC key lights and live L/R level meters, time, progress and Leq run on the screen, with a red line at the legal limit. Tap again to stop; it shows "tag it" and drops back to standby.
+- **Radial gain meter**: a 40-segment LED ring over 270° (30–110 dB) around a knurled knob that turns with the sound, with the live dB in the centre, a white peak-hold segment, a red marker at the legal limit, a lime arc for the recording's average (Leq) and an outer ring that fills toward 60 seconds. Tap the meter (or the record button): the ring sweeps up and recording starts; tap again and it sweeps down.
 - **Highlights**: live tiles for the level now (with a 15-second sound graph), average, time (progress ring to 60 s), peak (per-second bars), background, and a verdict tile that says how far over or under the legal limit the recording is.
 - **Survey readings**: Leq (energy average), Max and L90 (background) over each recording.
 - **Live map**: OpenStreetMap streets or Esri satellite imagery. Each source is a category icon (church, mosque, music, car…) with its average dB. Tap the counters to filter by type, search by name, and tap a source to open its details: average, peak, visits, a dial against the limit and an open-air estimate of how far away it likely breaks the limit.
