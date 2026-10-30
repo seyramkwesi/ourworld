@@ -77,7 +77,7 @@ let tt=null;function toast(t){const el=$("toast");el.textContent=t;el.classList.
 (function(){const ul="<ul>"+BANDS.map((b,i)=>`<li><i style="background:var(${b.v})"></i>${b.name} <small>${["< 55","55–65","65–75","75–85","85+"][i]} dB</small></li>`).join("")+"</ul>";$("band").innerHTML=ul+ul+ul+ul})();
 
 /* ---------- Data layer (Supabase). Tests can swap window.__nmData in. ---------- */
-const WSEL="id,user_id,title,started_at,ended_at,duration_s,distance_m,avg_db,max_db,min_db,over_pct,n_points,n_cells,weighting,path,pins,created_at,profiles(name,emoji),kudos(user_id)";
+const WSEL="id,user_id,title,started_at,ended_at,duration_s,distance_m,avg_db,max_db,min_db,over_pct,n_points,n_cells,weighting,path,pins,created_at,profiles!walks_user_id_fkey(name,emoji),kudos(user_id)";
 function makeData(){
   if(!window.supabase||!window.supabase.createClient)return null;
   const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:"noisemap.auth"}});
