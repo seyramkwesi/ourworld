@@ -1,63 +1,55 @@
-# Community Noise Map
+# Noise Map: community noise walks
 
-A citizen science app: a phone-based sound level meter that maps noise in a community. Surveyors record a reading, tag the source (church, mosque, event, traffic and so on) and its location, and each reading appears on a shared map coloured by loudness and checked against Ghana EPA noise limits.
+Map the sound of your streets, one walk at a time. Like Strava, but for noise: start a walk, and your phone's microphone measures sound while GPS draws your route. Every few seconds a point is mapped, coloured by loudness and checked against Ghana EPA noise limits. Share the walk to a community map, give kudos, claim squares, unlock badges and climb the weekly leaderboard.
 
-The interface is a dashboard: a radial gain meter in the centre and a live map on the right, with an icon rail (a bottom tab bar on phones) for Recorder, Tag, Readings and Settings.
+## How it works
 
-It runs entirely in the browser. There is no server, no account and no build step.
+1. **Start walk.** Allow the microphone and location. Hold the phone in your hand (not your pocket), mic uncovered.
+2. **Walk.** The radial meter shows the level now. Your trail draws on the map, and a point is mapped every 5 seconds or 15 metres (energy-averaged Leq). Tap **Pin source** to mark what you hear: traffic, music & speakers, construction, generators, markets, worship, animals or quiet nature.
+3. **Finish** (tap twice). See your distance, time, average and loudest levels, % of the route over the legal limit, new squares and badges. Then **Save & share** to put it on the community map, or make a share-card image.
 
 ## Features
 
-- **Radial gain meter**: a 40-segment LED ring over 270° (30–110 dB) around a knurled knob that turns with the sound, with the live dB in the centre, a white peak-hold segment, a red marker at the legal limit, a lime arc for the recording's average (Leq) and an outer ring that fills toward 60 seconds. Tap the meter (or the record button): the ring sweeps up and recording starts; tap again and it sweeps down.
-- **Highlights**: live tiles for the level now (with a 15-second sound graph), average, time (progress ring to 60 s), peak (per-second bars), background, and a verdict tile that says how far over or under the legal limit the recording is.
-- **Did you know?**: swipeable cards with sourced facts on noise and health (WHO, NIOSH), Ghana's limits and the GS 1222:2018 standard, and how dB works, each with a "why it matters" note, plus a live card summarising your own survey. The verdict tile adds a matching tip for each recording.
-- **Audio clips (temporary)**: the sound is recorded alongside each measurement and kept in memory until the app is closed or refreshed. Play it back under the meter (with a waveform), on the Tag screen, or from a source's visits after saving; download a clip if you want to keep it. Nothing is uploaded.
-- **Survey readings**: Leq (energy average), Max and L90 (background) over each recording.
-- **Live map**: OpenStreetMap streets or Esri satellite imagery. Each source is a category icon (church, mosque, music, car…) with its average dB. Tap the counters to filter by type, search by name, and tap a source to open its details: average, peak, visits, a dial against the limit and an open-air estimate of how far away it likely breaks the limit.
-- **You → nearest**: with GPS on, a dashed route and distance point from you to the nearest noise source.
-- **Automatic location**: while the microphone is on, the app follows your phone's GPS (blue dot) and pins each reading where you recorded it. Tap the map to place a pin by hand instead.
-- **Limits**: Ghana EPA ambient noise levels in dB(A). Residential is 55 by day (6am–10pm) and 48 at night. Health & schools, mixed-use and commercial zones are also available.
-- **By-source summary**: ranks each church or other source by average level and counts how often it exceeded the limit.
-- **Export & import**: CSV and GeoJSON. Combine several surveyors' files into one map; duplicates are skipped. GeoJSON opens in QGIS or Google My Maps.
-- **Installable & offline**: add it to the home screen. It opens without a connection and keeps map tiles you have already viewed.
+- **Community feed**: everyone's walks with mini trail maps, stats and kudos.
+- **Weekly leaderboard**: by distance, squares or walks over the last 7 days.
+- **Squares**: the map is split into ~160 m squares. Walk new streets to claim them (lime = yours).
+- **Badges & streaks**: First steps, 5 km club, Marathon mapper, Night owl, Early bird, Quiet hunter, Storm chaser, Explorer, On a roll and more.
+- **You**: totals, 8-week distance chart, records, your walks and settings.
+- **Did you know?**: sourced facts on noise and health (WHO, NIOSH) and Ghana's limits (GS 1222:2018).
+- **Walk audio**: the sound of the walk is kept in memory for playback and download. It is never uploaded.
+- **Works offline**: walks finished offline are saved on the phone and upload automatically later. If the app closes mid-walk, you can recover it.
+- **Installable**: add it to your home screen.
 
-## Use it
+## Limits
 
-Open the GitHub Pages link for this repo on a phone, then:
+Ghana EPA ambient noise limits in dB(A). Residential is 55 by day (6am–10pm) and 48 at night. Choose schools/health, mixed-use or commercial under You → Settings.
 
-1. Stand where residents are exposed (a doorway or the street, not under the speaker).
-2. Tap the red record button, allow microphone and location access, and record for 30–60 seconds. Tap again to stop.
-3. Enter the source name, type and distance, then **Save reading**. Your GPS location is added automatically; tap the map if you want to move the pin.
+## Privacy
 
-The microphone and GPS only work over HTTPS. GitHub Pages provides that automatically.
+- You join with just a walker name and emoji (an anonymous account, no email).
+- By default the first and last 150 m of each walk are hidden before it is shared, so your home isn't on the map.
+- Audio is never uploaded.
 
-## Calibrate before fieldwork
+## Calibrate
 
-Phone microphones vary by several dB, so readings start out uncalibrated. Hold each phone beside a real sound level meter, open **Settings & calibration**, and adjust the offset until the two match. Write the offset down for each phone. Uncalibrated readings are fine for comparing places; for evidence, calibrate and follow up hotspots with a certified meter.
+Phone microphones vary by several dB. Hold your phone beside a real sound level meter and adjust the calibration offset under You → Settings until they match.
 
-## Data and privacy
+## Backend
 
-Readings stay in each phone's browser storage until they are exported. Clearing browser data deletes them, so export CSV after each survey session.
-
-## Deploying your own copy
-
-1. Fork or copy this repo.
-2. Go to **Settings → Pages**, set **Source** to *Deploy from a branch*, then choose `main` and `/ (root)`.
-3. Your app will be at `https://<your-username>.github.io/<repo-name>/`.
-
-When you change `index.html`, also bump `VERSION` in `sw.js` so installed copies pick up the update.
+Walks, profiles and kudos are stored in [Supabase](https://supabase.com) (Postgres with row-level security: anyone can read; you can only write your own rows). In the Supabase dashboard, **Authentication → Sign In / Providers → Allow anonymous sign-ins** must be on.
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `index.html` | The whole app: meter, map, tables, export |
-| `manifest.webmanifest` | App name, colours and icons for installing |
-| `sw.js` | Service worker for offline use |
-| `icons/` | App and home-screen icons |
-| `vendor/leaflet/` | Leaflet 1.9.4 map library (BSD-2-Clause), bundled so the app works offline |
+| `index.html` | Layout and styles |
+| `app.js` | Walk engine, meter, map, feed, leaderboard, badges |
+| `sw.js` | Service worker for offline use (bump `VERSION` on every change) |
+| `manifest.webmanifest`, `icons/` | Install metadata |
+| `vendor/leaflet/` | Leaflet 1.9.4 (BSD-2-Clause) |
+| `vendor/supabase/` | supabase-js 2 (MIT) |
 
-Built with [Leaflet](https://leafletjs.com/) and [OpenStreetMap](https://www.openstreetmap.org/copyright) tiles.
+Maps © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors; imagery © Esri.
 
 ## License
 

@@ -1,6 +1,6 @@
 // Community Noise Map service worker: makes the app open offline.
 // Bump VERSION whenever index.html or other app files change.
-const VERSION = "v18";
+const VERSION = "v19";
 const APP = "noisemap-app-" + VERSION;
 const CDN = "noisemap-cdn-v1";
 const TILES = "noisemap-tiles-v1";
@@ -9,6 +9,8 @@ const MAX_TILES = 1500;
 const APP_FILES = [
   "./",
   "./index.html",
+  "./app.js",
+  "./vendor/supabase/supabase.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -38,6 +40,8 @@ self.addEventListener("activate", (e) => {
   );
 });
 
+const url0 = (r) => new URL(r.url);
+
 async function trimTiles() {
   const c = await caches.open(TILES);
   const keys = await c.keys();
@@ -47,6 +51,7 @@ async function trimTiles() {
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
+  if (url0(req).hostname.endsWith("supabase.co")) return;
   const url = new URL(req.url);
 
   // App files: network first (revalidated with the server) so updates arrive; cache when offline.

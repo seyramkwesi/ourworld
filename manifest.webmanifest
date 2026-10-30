@@ -1,7 +1,7 @@
 {
   "name": "Community Noise Map",
   "short_name": "Noise Map",
-  "description": "Measure sound levels with your phone, tag them to a location and map noise from churches and other sources in your community.",
+  "description": "Go on noise walks with your phone, map the sound of your streets and climb the community leaderboard.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
